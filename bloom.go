@@ -57,25 +57,42 @@ import (
 	"bitset"
 	"hash"
 	"hash/fnv" 
-    "encoding/binary"
+    "encoding/binary" 
+	"math"
 	//"fmt"
 )
 
 type BloomFilter struct {
-	length uint
+	m uint
 	k	uint
 	b	*bitset.BitSet
 	hasher hash.Hash64
 }
 
-// Create a new Bloom filter with _m_ bits and _k_ hashing functions
+// Create a new Bloom filter with _m_ bits and _k_ hashing functions 
 func New(m uint, k uint) *BloomFilter {
 	 return &BloomFilter{m,k, bitset.New(m), fnv.New64() }
 }
 
-// Return the capacity, _n_, of a Bloom filter
+// estimate parameters. Based on https://bitbucket.org/ww/bloom/src/829aa19d01d9/bloom.go
+// used with permission.
+func estimateParameters (n uint, p float64) (m uint, k uint)  {
+	m = uint(-1 * float64(n) * math.Log(p) / math.Pow(math.Log(2), 2))
+	k = uint(math.Ceil(math.Log(2) * float64(m) / float64(n)))
+	return
+}
+
+// Create a new Bloom filter for about n items with fp 
+// false positive rate
+func NewWithEstimates(n uint, fp float64) *BloomFilter {
+	m, k := estimateParameters(n, fp)
+	return New(m,k)
+}
+
+
+// Return the capacity, _m_, of a Bloom filter
 func (b *BloomFilter) Cap() uint {
-	return b.length
+	return b.m
 }
 
 // Return the number of hash functions used
@@ -103,7 +120,7 @@ func (f *BloomFilter) locations(data []byte) (locs []uint) {
 	ub := uint(b)
 	//fmt.Println(ua, ub)
 	for i := uint(0) ; i < f.k; i++ {
-	   locs[i] = (ua + ub * i ) % f.length
+	   locs[i] = (ua + ub * i ) % f.m
 	}
 	//fmt.Println(data, "->", locs)
 	return
