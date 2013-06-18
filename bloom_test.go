@@ -118,3 +118,14 @@ func BenchmarkEstimted(b *testing.B) {
 		fmt.Println()
 	}
 }
+
+func BenchmarkTestAndAdd(b *testing.B) {
+	f := NewWithEstimates(uint(b.N), 0.0001)
+	key := make([]byte, 100)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		binary.BigEndian.PutUint32(key, uint32(i))
+		f.Test(key)
+		f.Add(key)
+	}
+}
