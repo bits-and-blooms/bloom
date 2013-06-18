@@ -146,6 +146,18 @@ func (f *BloomFilter) Test(data []byte) bool {
 	return true
 }
 
+// Equivalent to calling Test(data) then Add(data).  Returns the result of Test.
+func (f *BloomFilter) TestAndAdd(data []byte) bool {
+	present := true
+	for _, loc := range f.locations(data) {
+		if !f.b.Test(loc) {
+			present = false
+		}
+		f.b.Set(loc)
+	}
+	return present
+}
+
 // Clear all the data in a Bloom filter, removing all keys
 func (f *BloomFilter) ClearAll() *BloomFilter {
 	f.b.ClearAll()

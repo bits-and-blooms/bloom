@@ -10,14 +10,23 @@ func TestBasic(t *testing.T) {
 	f := New(1000, 4)
 	n1 := []byte("Bess")
 	n2 := []byte("Jane")
+	n3 := []byte("Emma")
 	f.Add(n1)
+	n3a := f.TestAndAdd(n3)
 	n1b := f.Test(n1)
 	n2b := f.Test(n2)
+	n3b := f.Test(n3)
 	if !n1b {
 		t.Errorf("%v should be in.", n1)
 	}
 	if n2b {
 		t.Errorf("%v should not be in.", n2)
+	}
+	if n3a {
+		t.Errorf("%v should not be in the first time we look.", n3)
+	}
+	if !n3b {
+		t.Errorf("%v should be in the second time we look.", n3)
 	}
 }
 
@@ -26,18 +35,28 @@ func TestBasicUint32(t *testing.T) {
 	n1 := make([]byte, 4)
 	n2 := make([]byte, 4)
 	n3 := make([]byte, 4)
+	n4 := make([]byte, 4)
 	binary.BigEndian.PutUint32(n1, 100)
 	binary.BigEndian.PutUint32(n2, 101)
 	binary.BigEndian.PutUint32(n3, 102)
+	binary.BigEndian.PutUint32(n4, 103)
 	f.Add(n1)
+	n3a := f.TestAndAdd(n3)
 	n1b := f.Test(n1)
 	n2b := f.Test(n2)
-	f.Test(n3)
+	n3b := f.Test(n3)
+	f.Test(n4)
 	if !n1b {
 		t.Errorf("%v should be in.", n1)
 	}
 	if n2b {
 		t.Errorf("%v should not be in.", n2)
+	}
+	if n3a {
+		t.Errorf("%v should not be in the first time we look.", n3)
+	}
+	if !n3b {
+		t.Errorf("%v should be in the second time we look.", n3)
 	}
 }
 
@@ -119,7 +138,7 @@ func BenchmarkEstimted(b *testing.B) {
 	}
 }
 
-func BenchmarkTestAndAdd(b *testing.B) {
+func BenchmarkSeparateTestAndAdd(b *testing.B) {
 	f := NewWithEstimates(uint(b.N), 0.0001)
 	key := make([]byte, 100)
 	b.ResetTimer()
@@ -127,5 +146,15 @@ func BenchmarkTestAndAdd(b *testing.B) {
 		binary.BigEndian.PutUint32(key, uint32(i))
 		f.Test(key)
 		f.Add(key)
+	}
+}
+
+func BenchmarkCombinedTestAndAdd(b *testing.B) {
+	f := NewWithEstimates(uint(b.N), 0.0001)
+	key := make([]byte, 100)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		binary.BigEndian.PutUint32(key, uint32(i))
+		f.TestAndAdd(key)
 	}
 }
