@@ -85,7 +85,7 @@ func TestEstimated10_001(t *testing.T) {
 	}
 }
 
-func BenchmarkDirect(t *testing.B) {
+func BenchmarkDirect(b *testing.B) {
 	n := uint(10000)
 	max_k := uint(10)
 	max_load := uint(20)
@@ -105,7 +105,7 @@ func BenchmarkDirect(t *testing.B) {
 	}
 }
 
-func BenchmarkEstimted(t *testing.B) {
+func BenchmarkEstimted(b *testing.B) {
 	for n := uint(5000); n <= 50000; n += 5000 {
 		fmt.Printf("%v", n)
 		for fp := 0.1; fp >= 0.00001; fp /= 10.0 {
