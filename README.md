@@ -42,7 +42,7 @@ for example, to add a uint32 to the filter:
     i := uint32(100)
     n1 := make([]byte,4)
     binary.BigEndian.PutUint32(n1,i)
-    f.Add(n1)
+    filter.Add(n1)
 
 Finally, there is a method to estimate the false positive rate of a particular
 bloom filter for a set of size _n_:
