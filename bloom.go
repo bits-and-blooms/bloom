@@ -4,14 +4,14 @@
 
 /*
 A Bloom filter is a representation of a set of _n_ items, where the main
-requirement is to make membership queries; _i.e._, whether an item is a 
+requirement is to make membership queries; _i.e._, whether an item is a
 member of a set.
 
 A Bloom filter has two parameters: _m_, a maximum size (typically a reasonably large
 multiple of the cardinality of the set to represent) and _k_, the number of hashing
 functions on elements of the set. (The actual hashing functions are important, too,
 but this is not a parameter for this implementation). A Bloom filter is backed by
-a BitSet; a key is represented in the filter by setting the bits at each value of the 
+a BitSet; a key is represented in the filter by setting the bits at each value of the
 hashing functions (modulo _m_). Set membership is done by _testing_ whether the
 bits at each value of the hashing functions (again, modulo _m_) are set. If so,
 the item is in the set. If the item is actually in the set, a Bloom filter will
@@ -27,7 +27,7 @@ h2, are used. Then, the _i_th hashing function is:
 
 Thus, the underlying hash function, FNV, is only called once per key.
 
-This implementation accepts keys for setting as testing as []byte. Thus, to 
+This implementation accepts keys for setting as testing as []byte. Thus, to
 add a string item, "Love":
 
     uint n = 1000
@@ -49,7 +49,7 @@ for example, to add a uint32 to the filter:
 Finally, there is a method to estimate the false positive rate of a particular
 bloom filter for a set of size _n_:
 
-    if filter.EstimateFalsePositiveRate(1000) > 0.001 
+    if filter.EstimateFalsePositiveRate(1000) > 0.001
 
 Given the particular hashing scheme, it's best to be empirical about this. Note
 that estimating the FP rate will clear the Bloom filter.
@@ -72,7 +72,7 @@ type BloomFilter struct {
 	hasher hash.Hash64
 }
 
-// Create a new Bloom filter with _m_ bits and _k_ hashing functions 
+// Create a new Bloom filter with _m_ bits and _k_ hashing functions
 func New(m uint, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.New(m), fnv.New64()}
 }
@@ -85,7 +85,7 @@ func estimateParameters(n uint, p float64) (m uint, k uint) {
 	return
 }
 
-// Create a new Bloom filter for about n items with fp 
+// Create a new Bloom filter for about n items with fp
 // false positive rate
 func NewWithEstimates(n uint, fp float64) *BloomFilter {
 	m, k := estimateParameters(n, fp)
