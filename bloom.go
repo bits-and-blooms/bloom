@@ -93,13 +93,13 @@ func NewWithEstimates(n uint, fp float64) *BloomFilter {
 }
 
 // Return the capacity, _m_, of a Bloom filter
-func (b *BloomFilter) Cap() uint {
-	return b.m
+func (f *BloomFilter) Cap() uint {
+	return f.m
 }
 
 // Return the number of hash functions used
-func (b *BloomFilter) K() uint {
-	return b.k
+func (f *BloomFilter) K() uint {
+	return f.k
 }
 
 // get the two basic hash function values for data
