@@ -2,6 +2,7 @@ package bloom
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -101,6 +102,32 @@ func TestEstimated10_001(t *testing.T) {
 	fp_rate := f.EstimateFalsePositiveRate(n)
 	if fp_rate > fp {
 		t.Errorf("False positive rate too high: n: %v, fp: %f, n: %v, k: %v result: %f", n, fp, m, k, fp_rate)
+	}
+}
+
+func TestMarshalUnmarshalJSON(t *testing.T) {
+	f := New(1000, 4)
+	data, err := json.Marshal(f)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	var g BloomFilter
+	err = json.Unmarshal(data, &g)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if g.m != f.m {
+		t.Error("invalid m value")
+	}
+	if g.k != f.k {
+		t.Error("invalid m value")
+	}
+	if g.b == nil {
+		t.Fatal("bitset is nil")
+	}
+	if !g.b.Equal(f.b) {
+		t.Error("bitsets are not equal")
 	}
 }
 

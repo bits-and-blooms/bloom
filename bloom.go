@@ -58,6 +58,7 @@ package bloom
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"github.com/willf/bitset"
 	"hash"
 	"hash/fnv"
@@ -186,4 +187,30 @@ func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fp_rate float64) {
 	fp_rate = float64(fp) / float64(100)
 	f.ClearAll()
 	return
+}
+
+// bloomFilterJSON is an unexported type for marshaling/unmarshaling BloomFilter struct.
+type bloomFilterJSON struct {
+	M uint           `json:"m"`
+	K uint           `json:"k"`
+	B *bitset.BitSet `json:"b"`
+}
+
+// MarshalJSON implements json.Marshaler interface.
+func (f *BloomFilter) MarshalJSON() ([]byte, error) {
+	return json.Marshal(bloomFilterJSON{f.m, f.k, f.b})
+}
+
+// UnmarshalJSON implements json.Unmarshaler interface.
+func (f *BloomFilter) UnmarshalJSON(data []byte) error {
+	var j bloomFilterJSON
+	err := json.Unmarshal(data, &j)
+	if err != nil {
+		return err
+	}
+	f.m = j.M
+	f.k = j.K
+	f.b = j.B
+	f.hasher = fnv.New64()
+	return nil
 }
