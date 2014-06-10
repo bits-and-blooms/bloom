@@ -1,6 +1,7 @@
 package bloom
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -121,7 +122,40 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 		t.Error("invalid m value")
 	}
 	if g.k != f.k {
+		t.Error("invalid k value")
+	}
+	if g.b == nil {
+		t.Fatal("bitset is nil")
+	}
+	if !g.b.Equal(f.b) {
+		t.Error("bitsets are not equal")
+	}
+}
+
+func TestReadWriteBinary(t *testing.T) {
+	f := New(1000, 4)
+	var buf bytes.Buffer
+	bytesWritten, err := f.WriteTo(&buf)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if bytesWritten != int64(buf.Len()) {
+		t.Errorf("incorrect write length %d != %d", bytesWritten, buf.Len())
+	}
+
+	var g BloomFilter
+	bytesRead, err := g.ReadFrom(&buf)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if bytesRead != bytesWritten {
+		t.Errorf("read unexpected number of bytes %d != %d", bytesRead, bytesWritten)
+	}
+	if g.m != f.m {
 		t.Error("invalid m value")
+	}
+	if g.k != f.k {
+		t.Error("invalid k value")
 	}
 	if g.b == nil {
 		t.Fatal("bitset is nil")

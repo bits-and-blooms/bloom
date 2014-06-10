@@ -62,6 +62,7 @@ import (
 	"github.com/willf/bitset"
 	"hash"
 	"hash/fnv"
+	"io"
 	"math"
 	//"fmt"
 )
@@ -213,4 +214,44 @@ func (f *BloomFilter) UnmarshalJSON(data []byte) error {
 	f.b = j.B
 	f.hasher = fnv.New64()
 	return nil
+}
+
+// WriteTo writes a binary representation of the BloomFilter to an i/o stream.
+// It returns the number of bytes written.
+func (f *BloomFilter) WriteTo(stream io.Writer) (int64, error) {
+	err := binary.Write(stream, binary.BigEndian, uint64(f.m))
+	if err != nil {
+		return 0, err
+	}
+	err = binary.Write(stream, binary.BigEndian, uint64(f.k))
+	if err != nil {
+		return 0, err
+	}
+	numBytes, err := f.b.WriteTo(stream)
+	return numBytes + int64(2*binary.Size(uint64(0))), err
+}
+
+// ReadFrom reads a binary representation of the BloomFilter (such as might
+// have been written by WriteTo()) from an i/o stream. It returns the number
+// of bytes read.
+func (f *BloomFilter) ReadFrom(stream io.Reader) (int64, error) {
+	var m, k uint64
+	err := binary.Read(stream, binary.BigEndian, &m)
+	if err != nil {
+		return 0, err
+	}
+	err = binary.Read(stream, binary.BigEndian, &k)
+	if err != nil {
+		return 0, err
+	}
+	b := &bitset.BitSet{}
+	numBytes, err := b.ReadFrom(stream)
+	if err != nil {
+		return 0, err
+	}
+	f.m = uint(m)
+	f.k = uint(k)
+	f.b = b
+	f.hasher = fnv.New64()
+	return numBytes + int64(2*binary.Size(uint64(0))), nil
 }
