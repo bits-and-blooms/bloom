@@ -53,3 +53,5 @@ Given the particular hashing scheme, it's best to be empirical about this. Note
 that estimating the FP rate will clear the Bloom filter.
                                                          
 Discussion here: [Bloom filter](https://groups.google.com/d/topic/golang-nuts/6MktecKi1bE/discussion)
+
+Godoc documentation at https://godoc.org/github.com/willf/bloom
