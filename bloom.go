@@ -57,6 +57,7 @@ that estimating the FP rate will clear the Bloom filter.
 package bloom
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"github.com/willf/bitset"
@@ -254,4 +255,22 @@ func (f *BloomFilter) ReadFrom(stream io.Reader) (int64, error) {
 	f.b = b
 	f.hasher = fnv.New64()
 	return numBytes + int64(2*binary.Size(uint64(0))), nil
+}
+
+// GobEncode implements gob.GobEncoder interface.
+func (f *BloomFilter) GobEncode() ([]byte, error) {
+	var buf bytes.Buffer
+	_, err := f.WriteTo(&buf)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+// GobDecode implements gob.GobDecoder interface.
+func (f *BloomFilter) GobDecode(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	_, err := f.ReadFrom(buf)
+	return err
 }
