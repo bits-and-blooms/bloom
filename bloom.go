@@ -279,5 +279,6 @@ func (f *BloomFilter) GobEncode() ([]byte, error) {
 func (f *BloomFilter) GobDecode(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	_, err := f.ReadFrom(buf)
+	f.locBuff = make([]uint, f.k)
 	return err
 }
