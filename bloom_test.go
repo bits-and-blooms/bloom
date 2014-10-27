@@ -3,9 +3,7 @@ package bloom
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/gob"
 	"encoding/json"
-	"fmt"
 	"testing"
 )
 
@@ -166,76 +164,26 @@ func TestReadWriteBinary(t *testing.T) {
 	}
 }
 
-func TestEncodeDecodeGob(t *testing.T) {
-	f := New(1000, 4)
-	f.Add([]byte("one"))
-	f.Add([]byte("two"))
-	f.Add([]byte("three"))
-	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(f)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	var g BloomFilter
-	err = gob.NewDecoder(&buf).Decode(&g)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	if g.m != f.m {
-		t.Error("invalid m value")
-	}
-	if g.k != f.k {
-		t.Error("invalid k value")
-	}
-	if g.b == nil {
-		t.Fatal("bitset is nil")
-	}
-	if !g.b.Equal(f.b) {
-		t.Error("bitsets are not equal")
-	}
-	if !g.Test([]byte("three")) {
-		t.Errorf("missing value 'three'")
-	}
-	if !g.Test([]byte("two")) {
-		t.Errorf("missing value 'two'")
-	}
-	if !g.Test([]byte("one")) {
-		t.Errorf("missing value 'one'")
-	}
-}
-
 func BenchmarkDirect(b *testing.B) {
 	n := uint(10000)
 	max_k := uint(10)
 	max_load := uint(20)
-	fmt.Printf("m/n")
-	for k := uint(2); k <= max_k; k++ {
-		fmt.Printf("\tk=%v", k)
-	}
-	fmt.Println()
+
 	for load := uint(2); load <= max_load; load++ {
-		fmt.Print(load)
 		for k := uint(2); k <= max_k; k++ {
 			f := New(n*load, k)
-			fp_rate := f.EstimateFalsePositiveRate(n)
-			fmt.Printf("\t%f", fp_rate)
+			f.EstimateFalsePositiveRate(n)
 		}
-		fmt.Println()
 	}
 }
 
 func BenchmarkEstimted(b *testing.B) {
 	for n := uint(5000); n <= 50000; n += 5000 {
-		fmt.Printf("%v", n)
 		for fp := 0.1; fp >= 0.00001; fp /= 10.0 {
-			fmt.Printf("\t%f", fp)
-			m, k := estimateParameters(n, fp)
+			estimateParameters(n, fp)
 			f := NewWithEstimates(n, fp)
-			fp_rate := f.EstimateFalsePositiveRate(n)
-			fmt.Printf("\t%v\t%v\t%f", m, k, fp_rate)
+			f.EstimateFalsePositiveRate(n)
 		}
-		fmt.Println()
 	}
 }
 
