@@ -60,24 +60,28 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"github.com/willf/bitset"
 	"hash"
 	"hash/fnv"
 	"io"
 	"math"
+
+	"github.com/willf/bitset"
 	//"fmt"
 )
 
 type BloomFilter struct {
-	m      uint
-	k      uint
-	b      *bitset.BitSet
-	hasher hash.Hash64
+	m       uint
+	k       uint
+	b       *bitset.BitSet
+	locBuff []uint
+	present bool
+	hasher  hash.Hash64
 }
 
 // Create a new Bloom filter with _m_ bits and _k_ hashing functions
 func New(m uint, k uint) *BloomFilter {
-	return &BloomFilter{m, k, bitset.New(m), fnv.New64()}
+
+	return &BloomFilter{m, k, bitset.New(m), make([]uint, k), false, fnv.New64()}
 }
 
 // estimate parameters. Based on https://bitbucket.org/ww/bloom/src/829aa19d01d9/bloom.go
@@ -118,14 +122,13 @@ func (f *BloomFilter) base_hashes(data []byte) (a uint32, b uint32) {
 }
 
 // get the _k_ locations to set/test in the underlying bitset
-func (f *BloomFilter) locations(data []byte) (locs []uint) {
-	locs = make([]uint, f.k)
+func (f *BloomFilter) locations(data []byte) {
 	a, b := f.base_hashes(data)
 	ua := uint(a)
 	ub := uint(b)
 	//fmt.Println(ua, ub)
 	for i := uint(0); i < f.k; i++ {
-		locs[i] = (ua + ub*i) % f.m
+		f.locBuff[i] = (ua + ub*i) % f.m
 	}
 	//fmt.Println(data, "->", locs)
 	return
@@ -133,16 +136,19 @@ func (f *BloomFilter) locations(data []byte) (locs []uint) {
 
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) Add(data []byte) *BloomFilter {
-	for _, loc := range f.locations(data) {
-		f.b.Set(loc)
+	f.locations(data)
+	for i := uint(0); i < f.k; i++ {
+		f.b.Set(f.locBuff[i])
 	}
+
 	return f
 }
 
 // Tests for the presence of data in the Bloom filter
 func (f *BloomFilter) Test(data []byte) bool {
-	for _, loc := range f.locations(data) {
-		if !f.b.Test(loc) {
+	f.locations(data)
+	for i := uint(0); i < f.k; i++ {
+		if !f.b.Test(f.locBuff[i]) {
 			return false
 		}
 	}
@@ -151,14 +157,15 @@ func (f *BloomFilter) Test(data []byte) bool {
 
 // Equivalent to calling Test(data) then Add(data).  Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
-	present := true
-	for _, loc := range f.locations(data) {
-		if !f.b.Test(loc) {
-			present = false
+	f.locations(data)
+
+	for i := uint(0); i < f.k; i++ {
+		if !f.b.Test(f.locBuff[i]) {
+			f.present = false
 		}
-		f.b.Set(loc)
+		f.b.Set(f.locBuff[i])
 	}
-	return present
+	return f.present
 }
 
 // Clear all the data in a Bloom filter, removing all keys
@@ -272,5 +279,6 @@ func (f *BloomFilter) GobEncode() ([]byte, error) {
 func (f *BloomFilter) GobDecode(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	_, err := f.ReadFrom(buf)
+	f.locBuff = make([]uint, f.k)
 	return err
 }
