@@ -221,6 +221,7 @@ func (f *BloomFilter) UnmarshalJSON(data []byte) error {
 	f.k = j.K
 	f.b = j.B
 	f.hasher = fnv.New64()
+	f.locBuff = make([]uint, f.k)
 	return nil
 }
 
