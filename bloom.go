@@ -158,7 +158,7 @@ func (f *BloomFilter) Test(data []byte) bool {
 // Equivalent to calling Test(data) then Add(data).  Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	f.locations(data)
-
+	f.present = true
 	for i := uint(0); i < f.k; i++ {
 		if !f.b.Test(f.locBuff[i]) {
 			f.present = false
