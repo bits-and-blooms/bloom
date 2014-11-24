@@ -151,7 +151,7 @@ func BenchmarkDirect(b *testing.B) {
 	}
 }
 
-func BenchmarkEstimted(b *testing.B) {
+func BenchmarkEstimated(b *testing.B) {
 	for n := uint(5000); n <= 50000; n += 5000 {
 		fmt.Printf("%v", n)
 		for fp := 0.1; fp >= 0.00001; fp /= 10.0 {
