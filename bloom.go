@@ -261,6 +261,7 @@ func (f *BloomFilter) ReadFrom(stream io.Reader) (int64, error) {
 	f.m = uint(m)
 	f.k = uint(k)
 	f.b = b
+	f.locBuff = make([]uint, k)
 	f.hasher = fnv.New64()
 	return numBytes + int64(2*binary.Size(uint64(0))), nil
 }

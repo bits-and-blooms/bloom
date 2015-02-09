@@ -133,6 +133,35 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestWriteToReadFrom(t *testing.T) {
+	var b bytes.Buffer
+	f := New(1000, 4)
+	_, err := f.WriteTo(&b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	g := New(1000, 1)
+	_, err = g.ReadFrom(&b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if g.m != f.m {
+		t.Error("invalid m value")
+	}
+	if g.k != f.k {
+		t.Error("invalid k value")
+	}
+	if g.b == nil {
+		t.Fatal("bitset is nil")
+	}
+	if !g.b.Equal(f.b) {
+		t.Error("bitsets are not equal")
+	}
+
+	g.Test([]byte(""))
+}
+
 func TestReadWriteBinary(t *testing.T) {
 	f := New(1000, 4)
 	var buf bytes.Buffer
