@@ -155,6 +155,25 @@ func (f *BloomFilter) Test(data []byte) bool {
 	return true
 }
 
+// TestConcurrent is same as Test but safe for concurrent usage.
+func (f *BloomFilter) TestConcurrent(data []byte) bool {
+	hasher := fnv.New64()
+	hasher.Reset()
+	hasher.Write(data)
+	sum := hasher.Sum(nil)
+	upper := sum[0:4]
+	lower := sum[4:8]
+	a := uint(binary.BigEndian.Uint32(lower))
+	b := uint(binary.BigEndian.Uint32(upper))
+	for i := uint(0); i < f.k; i++ {
+		u := (a + b*i) % f.m
+		if !f.b.Test(u) {
+			return false
+		}
+	}
+	return true
+}
+
 // Equivalent to calling Test(data) then Add(data).  Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	f.locations(data)

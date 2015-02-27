@@ -82,7 +82,7 @@ func TestConcurrent(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		for i := 0; i < try; i++ {
-			n1b := f.Test(n1)
+			n1b := f.TestConcurrent(n1)
 			if !n1b {
 				err1 = fmt.Errorf("%v should be in.", n1)
 				break
@@ -94,7 +94,7 @@ func TestConcurrent(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		for i := 0; i < try; i++ {
-			n2b := f.Test(n2)
+			n2b := f.TestConcurrent(n2)
 			if !n2b {
 				err2 = fmt.Errorf("%v should be in.", n2)
 				break
