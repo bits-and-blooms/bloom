@@ -53,6 +53,8 @@ bloom filter for a set of size _n_:
 
 Given the particular hashing scheme, it's best to be empirical about this. Note
 that estimating the FP rate will clear the Bloom filter.
+
+BloomFilter methods are not safe for concurrent usage except TestConcurrent method.
 */
 package bloom
 
@@ -125,11 +127,30 @@ func (f *BloomFilter) Add(data []byte) *BloomFilter {
 	return f
 }
 
-// Tests for the presence of data in the Bloom filter
+// Test for the presence of data in the Bloom filter
 func (f *BloomFilter) Test(data []byte) bool {
     for i := uint(0); i < f.k; i++ {
         locBuff := fnvhash(i,data) % f.m
 		if !f.b.Test(locBuff) {
+			return false
+		}
+	}
+	return true
+}
+
+// TestConcurrent is same as Test but safe for concurrent usage.
+func (f *BloomFilter) TestConcurrent(data []byte) bool {
+	hasher := fnv.New64()
+	hasher.Reset()
+	hasher.Write(data)
+	sum := hasher.Sum(nil)
+	upper := sum[0:4]
+	lower := sum[4:8]
+	a := uint(binary.BigEndian.Uint32(lower))
+	b := uint(binary.BigEndian.Uint32(upper))
+	for i := uint(0); i < f.k; i++ {
+		u := (a + b*i) % f.m
+		if !f.b.Test(u) {
 			return false
 		}
 	}

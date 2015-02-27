@@ -6,6 +6,8 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"runtime"
+	"sync"
 	"testing"
 )
 
@@ -60,6 +62,54 @@ func TestBasicUint32(t *testing.T) {
 	}
 	if !n3b {
 		t.Errorf("%v should be in the second time we look.", n3)
+	}
+}
+
+func TestConcurrent(t *testing.T) {
+	gmp := runtime.GOMAXPROCS(2)
+	defer runtime.GOMAXPROCS(gmp)
+
+	f := New(1000, 4)
+	n1 := []byte("Bess")
+	n2 := []byte("Jane")
+	f.Add(n1)
+	f.Add(n2)
+
+	var wg sync.WaitGroup
+	const try = 1000
+	var err1, err2 error
+
+	wg.Add(1)
+	go func() {
+		for i := 0; i < try; i++ {
+			n1b := f.TestConcurrent(n1)
+			if !n1b {
+				err1 = fmt.Errorf("%v should be in.", n1)
+				break
+			}
+		}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		for i := 0; i < try; i++ {
+			n2b := f.TestConcurrent(n2)
+			if !n2b {
+				err2 = fmt.Errorf("%v should be in.", n2)
+				break
+			}
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	if err1 != nil {
+		t.Fatal(err1)
+	}
+	if err2 != nil {
+		t.Fatal(err2)
 	}
 }
 
