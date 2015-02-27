@@ -60,8 +60,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"hash"
-	"hash/fnv"
 	"io"
 	"math"
 
@@ -73,21 +71,29 @@ type BloomFilter struct {
 	m       uint
 	k       uint
 	b       *bitset.BitSet
-	locBuff []uint
-	present bool
-	hasher  hash.Hash64
 }
 
 // Create a new Bloom filter with _m_ bits and _k_ hashing functions
 func New(m uint, k uint) *BloomFilter {
+	return &BloomFilter{m, k, bitset.New(m)}
+}
 
-	return &BloomFilter{m, k, bitset.New(m), make([]uint, k), false, fnv.New64()}
+
+
+// hash with fnv the data using index as a seed  
+func fnvhash(index uint, data []byte) uint {
+     hash := uint(index)
+     for _, c := range data {
+                hash ^= uint(c)
+                hash *= 16777619
+     }
+     return hash
 }
 
 // estimate parameters. Based on https://bitbucket.org/ww/bloom/src/829aa19d01d9/bloom.go
 // used with permission.
 func estimateParameters(n uint, p float64) (m uint, k uint) {
-	m = uint(-1 * float64(n) * math.Log(p) / math.Pow(math.Log(2), 2))
+	m = uint(math.Ceil(-1 * float64(n) * math.Log(p) / math.Pow(math.Log(2), 2)))
 	k = uint(math.Ceil(math.Log(2) * float64(m) / float64(n)))
 	return
 }
@@ -109,36 +115,11 @@ func (f *BloomFilter) K() uint {
 	return f.k
 }
 
-// get the two basic hash function values for data
-func (f *BloomFilter) base_hashes(data []byte) (a uint32, b uint32) {
-	f.hasher.Reset()
-	f.hasher.Write(data)
-	sum := f.hasher.Sum(nil)
-	upper := sum[0:4]
-	lower := sum[4:8]
-	a = binary.BigEndian.Uint32(lower)
-	b = binary.BigEndian.Uint32(upper)
-	return
-}
-
-// get the _k_ locations to set/test in the underlying bitset
-func (f *BloomFilter) locations(data []byte) {
-	a, b := f.base_hashes(data)
-	ua := uint(a)
-	ub := uint(b)
-	//fmt.Println(ua, ub)
-	for i := uint(0); i < f.k; i++ {
-		f.locBuff[i] = (ua + ub*i) % f.m
-	}
-	//fmt.Println(data, "->", locs)
-	return
-}
-
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) Add(data []byte) *BloomFilter {
-	f.locations(data)
-	for i := uint(0); i < f.k; i++ {
-		f.b.Set(f.locBuff[i])
+    for i := uint(0); i < f.k; i++ {
+        locBuff := fnvhash(i,data) % f.m
+		f.b.Set(locBuff)
 	}
 
 	return f
@@ -146,9 +127,9 @@ func (f *BloomFilter) Add(data []byte) *BloomFilter {
 
 // Tests for the presence of data in the Bloom filter
 func (f *BloomFilter) Test(data []byte) bool {
-	f.locations(data)
-	for i := uint(0); i < f.k; i++ {
-		if !f.b.Test(f.locBuff[i]) {
+    for i := uint(0); i < f.k; i++ {
+        locBuff := fnvhash(i,data) % f.m
+		if !f.b.Test(locBuff) {
 			return false
 		}
 	}
@@ -157,15 +138,15 @@ func (f *BloomFilter) Test(data []byte) bool {
 
 // Equivalent to calling Test(data) then Add(data).  Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
-	f.locations(data)
-	f.present = true
+	present := true
 	for i := uint(0); i < f.k; i++ {
-		if !f.b.Test(f.locBuff[i]) {
-			f.present = false
+		locBuff := fnvhash(i,data) % f.m
+		if !f.b.Test(locBuff) {
+			present = false
 		}
-		f.b.Set(f.locBuff[i])
+		f.b.Set(locBuff)
 	}
-	return f.present
+	return present
 }
 
 // Clear all the data in a Bloom filter, removing all keys
@@ -220,8 +201,6 @@ func (f *BloomFilter) UnmarshalJSON(data []byte) error {
 	f.m = j.M
 	f.k = j.K
 	f.b = j.B
-	f.hasher = fnv.New64()
-	f.locBuff = make([]uint, f.k)
 	return nil
 }
 
@@ -261,8 +240,6 @@ func (f *BloomFilter) ReadFrom(stream io.Reader) (int64, error) {
 	f.m = uint(m)
 	f.k = uint(k)
 	f.b = b
-	f.locBuff = make([]uint, k)
-	f.hasher = fnv.New64()
 	return numBytes + int64(2*binary.Size(uint64(0))), nil
 }
 
@@ -281,6 +258,5 @@ func (f *BloomFilter) GobEncode() ([]byte, error) {
 func (f *BloomFilter) GobDecode(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	_, err := f.ReadFrom(buf)
-	f.locBuff = make([]uint, f.k)
 	return err
 }
