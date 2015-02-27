@@ -53,6 +53,8 @@ bloom filter for a set of size _n_:
 
 Given the particular hashing scheme, it's best to be empirical about this. Note
 that estimating the FP rate will clear the Bloom filter.
+
+BloomFilter methods are not safe for concurrent usage except TestConcurrent method.
 */
 package bloom
 
