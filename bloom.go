@@ -144,7 +144,7 @@ func (f *BloomFilter) Add(data []byte) *BloomFilter {
 	return f
 }
 
-// Tests for the presence of data in the Bloom filter
+// Test for the presence of data in the Bloom filter
 func (f *BloomFilter) Test(data []byte) bool {
 	f.locations(data)
 	for i := uint(0); i < f.k; i++ {
