@@ -80,7 +80,7 @@ func New(m uint, k uint) *BloomFilter {
 
 
 
-// hash with fnv the data using index as a seed  
+// hash with fnv the data using index as a seed
 func fnvhash(index uint, data []byte) uint {
      hash := uint(index)
      for _, c := range data {
@@ -122,6 +122,12 @@ func (f *BloomFilter) Add(data []byte) *BloomFilter {
 		f.b.Set(locBuff)
 	}
 
+	return f
+}
+
+// Merge the data from two Bloom Filters. Returns the filter (allows chaining)
+func (f *BloomFilter) Merge(g *BloomFilter) *BloomFilter {
+	f.b.InPlaceUnion(g.b)
 	return f
 }
 
