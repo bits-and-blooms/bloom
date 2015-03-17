@@ -338,3 +338,54 @@ func BenchmarkCombinedTestAndAdd(b *testing.B) {
 		f.TestAndAdd(key)
 	}
 }
+
+func MergeTest( b *testing.B ) {
+	f := New(1000, 4)
+	n1 := []byte("f")
+	f.Add(n1)
+
+	g := New(1000, 4)
+	n2 := []byte("g")
+	g.Add(n2)
+
+	h := New(999,  4)
+	n3 := []byte("h")
+	h.Add(n3)
+
+	j := New(1000, 5)
+	n4 := []byte("j")
+	j.Add(n4)
+
+
+	var err error
+
+	err = f.Merge(g)
+	if err != nil {
+		b.Errorf("There should be no error when merging two similar filters")
+	}
+
+	err = f.Merge(h)
+	if err == nil {
+		b.Errorf("There should be an error when merging filters with mismatched m")
+	}
+
+	err = f.Merge(j)
+	if err == nil {
+		b.Errorf("There should be an error when merging filters with mismatched k")
+	}
+
+	n2b := f.Test(n2)
+	if !n2b {
+		b.Errorf("The value doesn't exist after a valid merge")
+	}
+
+	n3b := f.Test(n3)
+	if n3b {
+		b.Errorf("The value exists after an invalid merge")
+	}
+
+	n4b := f.Test(n4)
+	if n4b {
+		b.Errorf("The value exists after an invalid merge")
+	}
+}
