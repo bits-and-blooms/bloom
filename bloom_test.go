@@ -6,11 +6,10 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"testing"
 	"runtime"
 	"sync"
+	"testing"
 )
-
 
 func TestConcurrent(t *testing.T) {
 	gmp := runtime.GOMAXPROCS(2)

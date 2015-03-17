@@ -16,15 +16,10 @@ the item is in the set. If the item is actually in the set, a Bloom filter will
 never fail (the true positive rate is 1.0); but it is susceptible to false
 positives. The art is to choose _k_ and _m_ correctly.
 
-In this implementation, the hashing function used is FNV, a non-cryptographic
-hashing function which is part of the Go package (hash/fnv). For a item, the
-64-bit FNV hash is computed, and upper and lower 32 bit numbers, call them h1 and
-h2, are used. Then, the _i_th hashing function is:
-
-    h1 + h2*i
+In this implementation, the hashing functions used is a local version of FNV, 
+a non-cryptographic hashing function, seeded with the index number of 
+the kth hashing function.
     
-Thus, the underlying hash function, FNV, is only called once per key.
-
 This implementation accepts keys for setting as testing as []byte. Thus, to 
 add a string item, "Love":
 

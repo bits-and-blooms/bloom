@@ -18,14 +18,9 @@ the item is in the set. If the item is actually in the set, a Bloom filter will
 never fail (the true positive rate is 1.0); but it is susceptible to false
 positives. The art is to choose _k_ and _m_ correctly.
 
-In this implementation, the hashing function used is FNV, a non-cryptographic
-hashing function which is part of the Go package (hash/fnv). For a item, the
-64-bit FNV hash is computed, and upper and lower 32 bit numbers, call them h1 and
-h2, are used. Then, the _i_th hashing function is:
-
-    h1 + h2*i
-
-Thus, the underlying hash function, FNV, is only called once per key.
+In this implementation, the hashing functions used is a local version of FNV,
+a non-cryptographic hashing function, seeded with the index number of
+the kth hashing function.
 
 This implementation accepts keys for setting as testing as []byte. Thus, to
 add a string item, "Love":
@@ -68,9 +63,9 @@ import (
 )
 
 type BloomFilter struct {
-	m       uint
-	k       uint
-	b       *bitset.BitSet
+	m uint
+	k uint
+	b *bitset.BitSet
 }
 
 // Create a new Bloom filter with _m_ bits and _k_ hashing functions
@@ -78,16 +73,14 @@ func New(m uint, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.New(m)}
 }
 
-
-
 // hash with fnv the data using index as a seed
 func fnvhash(index uint, data []byte) uint {
-     hash := uint(index)
-     for _, c := range data {
-                hash ^= uint(c)
-                hash *= 16777619
-     }
-     return hash
+	hash := uint(index)
+	for _, c := range data {
+		hash ^= uint(c)
+		hash *= 16777619
+	}
+	return hash
 }
 
 // estimate parameters. Based on https://bitbucket.org/ww/bloom/src/829aa19d01d9/bloom.go
@@ -117,8 +110,8 @@ func (f *BloomFilter) K() uint {
 
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) Add(data []byte) *BloomFilter {
-    for i := uint(0); i < f.k; i++ {
-        locBuff := fnvhash(i,data) % f.m
+	for i := uint(0); i < f.k; i++ {
+		locBuff := fnvhash(i, data) % f.m
 		f.b.Set(locBuff)
 	}
 
@@ -133,8 +126,8 @@ func (f *BloomFilter) Merge(g *BloomFilter) *BloomFilter {
 
 // Tests for the presence of data in the Bloom filter
 func (f *BloomFilter) Test(data []byte) bool {
-    for i := uint(0); i < f.k; i++ {
-        locBuff := fnvhash(i,data) % f.m
+	for i := uint(0); i < f.k; i++ {
+		locBuff := fnvhash(i, data) % f.m
 		if !f.b.Test(locBuff) {
 			return false
 		}
@@ -146,7 +139,7 @@ func (f *BloomFilter) Test(data []byte) bool {
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	present := true
 	for i := uint(0); i < f.k; i++ {
-		locBuff := fnvhash(i,data) % f.m
+		locBuff := fnvhash(i, data) % f.m
 		if !f.b.Test(locBuff) {
 			present = false
 		}
@@ -180,7 +173,7 @@ func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fp_rate float64) {
 			fp++
 		}
 	}
-	fp_rate = float64(fp) / float64(100)
+	fp_rate = float64(fp) / float64(rounds) * float64(100)
 	f.ClearAll()
 	return
 }
