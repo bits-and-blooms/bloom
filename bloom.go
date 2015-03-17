@@ -55,9 +55,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math"
-	"fmt"
 
 	"github.com/willf/bitset"
 )
