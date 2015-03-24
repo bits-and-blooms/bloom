@@ -158,7 +158,7 @@ func (f *BloomFilter) ClearAll() *BloomFilter {
 	return f
 }
 
-// Estimate, for a BloomFilter with a limit of m bytes
+// Estimate, for a BloomFilter with a estimate of m bits
 // and k hash functions, what the false positive rate will be
 // whilst storing n entries; runs 100,000 tests.
 func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fpRate float64) {
