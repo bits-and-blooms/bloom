@@ -59,7 +59,6 @@ import (
 	"math"
 
 	"github.com/willf/bitset"
-	//"fmt"
 )
 
 type BloomFilter struct {
@@ -73,7 +72,12 @@ func New(m uint, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.New(m)}
 }
 
-// hash with fnv the data using index as a seed
+func baseHashes(data []byte) (h1 uint, h2 uint) {
+	h1 = fnvhash(0, data)
+	h2 = fnvhash(1, data)
+	return
+}
+
 func fnvhash(index uint, data []byte) uint {
 	hash := uint(index)
 	for _, c := range data {
@@ -81,6 +85,12 @@ func fnvhash(index uint, data []byte) uint {
 		hash *= 16777619
 	}
 	return hash
+}
+
+func (f *BloomFilter) location(h1 uint, h2 uint, i uint) (location uint) {
+	l := (h1 + h2*i) % f.m
+	location = uint(l)
+	return
 }
 
 // estimate parameters. Based on https://bitbucket.org/ww/bloom/src/829aa19d01d9/bloom.go
@@ -110,19 +120,18 @@ func (f *BloomFilter) K() uint {
 
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) Add(data []byte) *BloomFilter {
+	h1, h2 := baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
-		locBuff := fnvhash(i, data) % f.m
-		f.b.Set(locBuff)
+		f.b.Set(f.location(h1, h2, i))
 	}
-
 	return f
 }
 
 // Tests for the presence of data in the Bloom filter
 func (f *BloomFilter) Test(data []byte) bool {
+	h1, h2 := baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
-		locBuff := fnvhash(i, data) % f.m
-		if !f.b.Test(locBuff) {
+		if !f.b.Test(f.location(h1, h2, i)) {
 			return false
 		}
 	}
@@ -132,12 +141,13 @@ func (f *BloomFilter) Test(data []byte) bool {
 // Equivalent to calling Test(data) then Add(data).  Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	present := true
+	h1, h2 := baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
-		locBuff := fnvhash(i, data) % f.m
-		if !f.b.Test(locBuff) {
+		l := f.location(h1, h2, i)
+		if !f.b.Test(l) {
 			present = false
 		}
-		f.b.Set(locBuff)
+		f.b.Set(l)
 	}
 	return present
 }
@@ -150,9 +160,9 @@ func (f *BloomFilter) ClearAll() *BloomFilter {
 
 // Estimate, for a BloomFilter with a limit of m bytes
 // and k hash functions, what the false positive rate will be
-// whilst storing n entries; runs n * 2 tests.
-func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fp_rate float64) {
-	rounds := uint32(n * 2)
+// whilst storing n entries; runs 100,000 tests.
+func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fpRate float64) {
+	rounds := uint32(100000)
 	f.ClearAll()
 	n1 := make([]byte, 4)
 	for i := uint32(0); i < uint32(n); i++ {
@@ -164,10 +174,11 @@ func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fp_rate float64) {
 	for i := uint32(0); i < rounds; i++ {
 		binary.BigEndian.PutUint32(n1, i+uint32(n)+1)
 		if f.Test(n1) {
+			//fmt.Printf("%v failed.\n", i+uint32(n)+1)
 			fp++
 		}
 	}
-	fp_rate = float64(fp) / float64(rounds) * float64(100)
+	fpRate = float64(fp) / (float64(rounds) * float64(100))
 	f.ClearAll()
 	return
 }
@@ -251,5 +262,6 @@ func (f *BloomFilter) GobEncode() ([]byte, error) {
 func (f *BloomFilter) GobDecode(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	_, err := f.ReadFrom(buf)
+
 	return err
 }
