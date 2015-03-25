@@ -1,8 +1,6 @@
-// Copyright 2013 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.package bloom
-
 /*
+Package bloom provides data structures and methods for creating Bloom filters.
+
 A Bloom filter is a representation of a set of _n_ items, where the main
 requirement is to make membership queries; _i.e._, whether an item is a
 member of a set.
@@ -61,23 +59,21 @@ import (
 	"github.com/willf/bitset"
 )
 
+// A BloomFilter is a representation of a set of _n_ items, where the main
+// requirement is to make membership queries; _i.e._, whether an item is a
+// member of a set.
 type BloomFilter struct {
 	m uint
 	k uint
 	b *bitset.BitSet
 }
 
-// Create a new Bloom filter with _m_ bits and _k_ hashing functions
+// New creates a new Bloom filter with _m_ bits and _k_ hashing functions
 func New(m uint, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.New(m)}
 }
 
-func baseHashes(data []byte) (h1 uint, h2 uint) {
-	h1 = fnvhash(0, data)
-	h2 = fnvhash(1, data)
-	return
-}
-
+// fnvhash returns the FNV hash value of data, using an index as a seed
 func fnvhash(index uint, data []byte) uint {
 	hash := uint(index)
 	for _, c := range data {
@@ -87,13 +83,23 @@ func fnvhash(index uint, data []byte) uint {
 	return hash
 }
 
+// baseHashes returns the two hash values of data that are used to create k
+// hashes
+func baseHashes(data []byte) (h1 uint, h2 uint) {
+	h1 = fnvhash(0, data)
+	h2 = fnvhash(1, data)
+	return
+}
+
+// location returns the ith hashed location using the two base hash values
 func (f *BloomFilter) location(h1 uint, h2 uint, i uint) (location uint) {
 	l := (h1 + h2*i) % f.m
 	location = uint(l)
 	return
 }
 
-// estimate parameters. Based on https://bitbucket.org/ww/bloom/src/829aa19d01d9/bloom.go
+// estimateParameters estimates requirements for m and k.
+// Based on https://bitbucket.org/ww/bloom/src/829aa19d01d9/bloom.go
 // used with permission.
 func estimateParameters(n uint, p float64) (m uint, k uint) {
 	m = uint(math.Ceil(-1 * float64(n) * math.Log(p) / math.Pow(math.Log(2), 2)))
@@ -101,19 +107,19 @@ func estimateParameters(n uint, p float64) (m uint, k uint) {
 	return
 }
 
-// Create a new Bloom filter for about n items with fp
+// NewWithEstimates creates a new Bloom filter for about n items with fp
 // false positive rate
 func NewWithEstimates(n uint, fp float64) *BloomFilter {
 	m, k := estimateParameters(n, fp)
 	return New(m, k)
 }
 
-// Return the capacity, _m_, of a Bloom filter
+// Cap returns the capacity, _m_, of a Bloom filter
 func (f *BloomFilter) Cap() uint {
 	return f.m
 }
 
-// Return the number of hash functions used
+// K returns the number of hash functions used in the BloomFilter
 func (f *BloomFilter) K() uint {
 	return f.k
 }
@@ -127,7 +133,9 @@ func (f *BloomFilter) Add(data []byte) *BloomFilter {
 	return f
 }
 
-// Tests for the presence of data in the Bloom filter
+// Test returns true if the data is in the BloomFilter, false otherwise.
+// If true, the result might be a false positive. If false, the data
+// is definitely not in the set.
 func (f *BloomFilter) Test(data []byte) bool {
 	h1, h2 := baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
@@ -138,7 +146,8 @@ func (f *BloomFilter) Test(data []byte) bool {
 	return true
 }
 
-// Equivalent to calling Test(data) then Add(data).  Returns the result of Test.
+// TestAndAdd is the equivalent to calling Test(data) then Add(data).
+// Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	present := true
 	h1, h2 := baseHashes(data)
@@ -152,15 +161,16 @@ func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	return present
 }
 
-// Clear all the data in a Bloom filter, removing all keys
+// ClearAll clears all the data in a Bloom filter, removing all keys
 func (f *BloomFilter) ClearAll() *BloomFilter {
 	f.b.ClearAll()
 	return f
 }
 
-// Estimate, for a BloomFilter with a estimate of m bits
+// EstimateFalsePositiveRate returns, for a BloomFilter with a estimate of m bits
 // and k hash functions, what the false positive rate will be
-// whilst storing n entries; runs 100,000 tests.
+// while storing n entries; runs 100,000 tests. This is an empirical
+// test using integers as keys. As a side-effect, it clears the BloomFilter.
 func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fpRate float64) {
 	rounds := uint32(100000)
 	f.ClearAll()
