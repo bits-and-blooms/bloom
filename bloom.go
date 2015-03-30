@@ -51,7 +51,6 @@ package bloom
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"io"
@@ -74,16 +73,6 @@ func New(m uint, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.New(m)}
 }
 
-// fnvhash returns the FNV hash value of data, using an index as a seed
-func fnvhash(index uint, data []byte) uint {
-	hash := uint(index) + 2166136261
-	for _, c := range data {
-		hash ^= uint(c)
-		hash *= 16777619
-	}
-	return hash
-}
-
 func fnv64Hash(index uint, data []byte) uint64 {
 	hash := uint64(index) + 14695981039346656037
 	for _, c := range data {
@@ -101,16 +90,6 @@ func baseHashes(data []byte) []uint64 {
 		fnv64Hash(1, data),
 		fnv64Hash(2, data),
 		fnv64Hash(3, data),
-	}
-}
-
-func baseHashesSHA(data []byte) []uint64 {
-	h := sha256.Sum256(data)
-	return []uint64{
-		binary.LittleEndian.Uint64(h[0:8]),
-		binary.LittleEndian.Uint64(h[8:16]),
-		binary.LittleEndian.Uint64(h[16:24]),
-		binary.LittleEndian.Uint64(h[24:32]),
 	}
 }
 
