@@ -75,7 +75,7 @@ func New(m uint, k uint) *BloomFilter {
 
 // fnvhash returns the FNV hash value of data, using an index as a seed
 func fnvhash(index uint, data []byte) uint {
-	hash := uint(index)
+	hash := uint(index) + 2166136261
 	for _, c := range data {
 		hash ^= uint(c)
 		hash *= 16777619
@@ -98,10 +98,10 @@ func (f *BloomFilter) location(h1 uint, h2 uint, i uint) (location uint) {
 	return
 }
 
-// estimateParameters estimates requirements for m and k.
+// EstimateParameters estimates requirements for m and k.
 // Based on https://bitbucket.org/ww/bloom/src/829aa19d01d9/bloom.go
 // used with permission.
-func estimateParameters(n uint, p float64) (m uint, k uint) {
+func EstimateParameters(n uint, p float64) (m uint, k uint) {
 	m = uint(math.Ceil(-1 * float64(n) * math.Log(p) / math.Pow(math.Log(2), 2)))
 	k = uint(math.Ceil(math.Log(2) * float64(m) / float64(n)))
 	return
@@ -110,7 +110,7 @@ func estimateParameters(n uint, p float64) (m uint, k uint) {
 // NewWithEstimates creates a new Bloom filter for about n items with fp
 // false positive rate
 func NewWithEstimates(n uint, fp float64) *BloomFilter {
-	m, k := estimateParameters(n, fp)
+	m, k := EstimateParameters(n, fp)
 	return New(m, k)
 }
 
@@ -188,7 +188,7 @@ func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fpRate float64) {
 			fp++
 		}
 	}
-	fpRate = float64(fp) / (float64(rounds) * float64(100))
+	fpRate = float64(fp) / (float64(rounds))
 	f.ClearAll()
 	return
 }

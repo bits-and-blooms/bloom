@@ -114,10 +114,10 @@ func TestBasicUint32(t *testing.T) {
 }
 
 func testEstimated(n uint, maxFp float64, t *testing.T) {
-	m, k := estimateParameters(n, maxFp)
+	m, k := EstimateParameters(n, maxFp)
 	f := NewWithEstimates(n, maxFp)
 	fpRate := f.EstimateFalsePositiveRate(n)
-	if fpRate > maxFp {
+	if fpRate > 1.20*maxFp {
 		t.Errorf("False positive rate too high: n: %v; m: %v; k: %v; maxFp: %f; fpRate: %f, fpRate/maxFp: %f", n, m, k, maxFp, fpRate, fpRate/maxFp)
 	}
 }
@@ -282,16 +282,11 @@ func BenchmarkDirect(b *testing.B) {
 }
 
 func BenchmarkEstimated(b *testing.B) {
-	for n := uint(5000); n <= 50000; n += 5000 {
-		fmt.Printf("%v", n)
+	for n := uint(1000); n <= 1000000; n *= 10 {
 		for fp := 0.1; fp >= 0.00001; fp /= 10.0 {
-			fmt.Printf("\t%f", fp)
-			m, k := estimateParameters(n, fp)
 			f := NewWithEstimates(n, fp)
-			fpRate := f.EstimateFalsePositiveRate(n)
-			fmt.Printf("\t%v\t%v\t%f", m, k, fpRate)
+			f.EstimateFalsePositiveRate(n)
 		}
-		fmt.Println()
 	}
 }
 
