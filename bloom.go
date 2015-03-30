@@ -51,6 +51,7 @@ package bloom
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"io"
@@ -83,18 +84,40 @@ func fnvhash(index uint, data []byte) uint {
 	return hash
 }
 
-// baseHashes returns the two hash values of data that are used to create k
-// hashes
-func baseHashes(data []byte) (h1 uint, h2 uint) {
-	h1 = fnvhash(0, data)
-	h2 = fnvhash(1, data)
-	return
+func fnv64Hash(index uint, data []byte) uint64 {
+	hash := uint64(index) + 14695981039346656037
+	for _, c := range data {
+		hash ^= uint64(c)
+		hash *= 1099511628211
+	}
+	return hash
 }
 
-// location returns the ith hashed location using the two base hash values
-func (f *BloomFilter) location(h1 uint, h2 uint, i uint) (location uint) {
-	l := (h1 + h2*i) % f.m
-	location = uint(l)
+// baseHashes returns the four hash values of data that are used to create k
+// hashes
+func baseHashes(data []byte) []uint64 {
+	return []uint64{
+		fnv64Hash(0, data),
+		fnv64Hash(1, data),
+		fnv64Hash(2, data),
+		fnv64Hash(3, data),
+	}
+}
+
+func baseHashesSHA(data []byte) []uint64 {
+	h := sha256.Sum256(data)
+	return []uint64{
+		binary.LittleEndian.Uint64(h[0:8]),
+		binary.LittleEndian.Uint64(h[8:16]),
+		binary.LittleEndian.Uint64(h[16:24]),
+		binary.LittleEndian.Uint64(h[24:32]),
+	}
+}
+
+// location returns the ith hashed location using the four base hash values
+func (f *BloomFilter) location(h []uint64, i uint) (location uint) {
+	ii := uint64(i)
+	location = uint((h[ii%2] + ii*h[2+(((ii+(ii%2))%4)/2)]) % uint64(f.m))
 	return
 }
 
@@ -126,39 +149,57 @@ func (f *BloomFilter) K() uint {
 
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) Add(data []byte) *BloomFilter {
-	h1, h2 := baseHashes(data)
+	h := baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
-		f.b.Set(f.location(h1, h2, i))
+		f.b.Set(f.location(h, i))
 	}
 	return f
+}
+
+// AddString to the Bloom Filter. Returns the filter (allows chaining)
+func (f *BloomFilter) AddString(data string) *BloomFilter {
+	return f.Add([]byte(data))
 }
 
 // Test returns true if the data is in the BloomFilter, false otherwise.
 // If true, the result might be a false positive. If false, the data
 // is definitely not in the set.
 func (f *BloomFilter) Test(data []byte) bool {
-	h1, h2 := baseHashes(data)
+	h := baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
-		if !f.b.Test(f.location(h1, h2, i)) {
+		if !f.b.Test(f.location(h, i)) {
 			return false
 		}
 	}
 	return true
 }
 
+// TestString returns true if the string is in the BloomFilter, false otherwise.
+// If true, the result might be a false positive. If false, the data
+// is definitely not in the set.
+func (f *BloomFilter) TestString(data string) bool {
+	return f.Test([]byte(data))
+}
+
 // TestAndAdd is the equivalent to calling Test(data) then Add(data).
 // Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	present := true
-	h1, h2 := baseHashes(data)
+	h := baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
-		l := f.location(h1, h2, i)
+		l := f.location(h, i)
 		if !f.b.Test(l) {
 			present = false
 		}
 		f.b.Set(l)
 	}
 	return present
+}
+
+// TestAndAddString is the equivalent to calling Test(string) then Add(string).
+// Returns the result of Test.
+func (f *BloomFilter) TestAndAddString(data string) bool {
+	return f.TestAndAdd([]byte(data))
 }
 
 // ClearAll clears all the data in a Bloom filter, removing all keys
