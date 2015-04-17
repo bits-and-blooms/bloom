@@ -30,7 +30,7 @@ func TestConcurrent(t *testing.T) {
 		for i := 0; i < try; i++ {
 			n1b := f.Test(n1)
 			if !n1b {
-				err1 = fmt.Errorf("%v should be in.", n1)
+				err1 = fmt.Errorf("%v should be in", n1)
 				break
 			}
 		}
@@ -42,7 +42,7 @@ func TestConcurrent(t *testing.T) {
 		for i := 0; i < try; i++ {
 			n2b := f.Test(n2)
 			if !n2b {
-				err2 = fmt.Errorf("%v should be in.", n2)
+				err2 = fmt.Errorf("%v should be in", n2)
 				break
 			}
 		}
@@ -113,49 +113,57 @@ func TestBasicUint32(t *testing.T) {
 	}
 }
 
-func TestDirect20_5(t *testing.T) {
-	n := uint(10000)
-	k := uint(5)
-	load := uint(20)
-	f := New(n*load, k)
-	fp_rate := f.EstimateFalsePositiveRate(n)
-	if fp_rate > 0.0001 {
-		t.Errorf("False positive rate too high: load=%v, k=%v, %f", load, k, fp_rate)
+func TestString(t *testing.T) {
+	f := NewWithEstimates(1000, 0.001)
+	n1 := "Love"
+	n2 := "is"
+	n3 := "in"
+	n4 := "bloom"
+	f.AddString(n1)
+	n3a := f.TestAndAddString(n3)
+	n1b := f.TestString(n1)
+	n2b := f.TestString(n2)
+	n3b := f.TestString(n3)
+	f.TestString(n4)
+	if !n1b {
+		t.Errorf("%v should be in.", n1)
+	}
+	if n2b {
+		t.Errorf("%v should not be in.", n2)
+	}
+	if n3a {
+		t.Errorf("%v should not be in the first time we look.", n3)
+	}
+	if !n3b {
+		t.Errorf("%v should be in the second time we look.", n3)
+	}
+
+}
+
+func testEstimated(n uint, maxFp float64, t *testing.T) {
+	m, k := EstimateParameters(n, maxFp)
+	f := NewWithEstimates(n, maxFp)
+	fpRate := f.EstimateFalsePositiveRate(n)
+	if fpRate > 1.10*maxFp {
+		t.Errorf("False positive rate too high: n: %v; m: %v; k: %v; maxFp: %f; fpRate: %f, fpRate/maxFp: %f", n, m, k, maxFp, fpRate, fpRate/maxFp)
 	}
 }
 
-func TestDirect15_10(t *testing.T) {
-	n := uint(10000)
-	k := uint(10)
-	load := uint(15)
-	f := New(n*load, k)
-	fp_rate := f.EstimateFalsePositiveRate(n)
-	if fp_rate > 0.0001 {
-		t.Errorf("False positive rate too high: load=%v, k=%v, %f", load, k, fp_rate)
-	}
-}
-
-func TestEstimated10_0001(t *testing.T) {
-	n := uint(10000)
-	fp := 0.0001
-	m, k := estimateParameters(n, fp)
-	f := NewWithEstimates(n, fp)
-	fp_rate := f.EstimateFalsePositiveRate(n)
-	if fp_rate > fp {
-		t.Errorf("False positive rate too high: n: %v, fp: %f, n: %v, k: %v result: %f", n, fp, m, k, fp_rate)
-	}
-}
-
-func TestEstimated10_001(t *testing.T) {
-	n := uint(10000)
-	fp := 0.001
-	m, k := estimateParameters(n, fp)
-	f := NewWithEstimates(n, fp)
-	fp_rate := f.EstimateFalsePositiveRate(n)
-	if fp_rate > fp {
-		t.Errorf("False positive rate too high: n: %v, fp: %f, n: %v, k: %v result: %f", n, fp, m, k, fp_rate)
-	}
-}
+func TestEstimated1000_0001(t *testing.T)     { testEstimated(1000, 0.000100, t) }
+func TestEstimated10000_0001(t *testing.T)    { testEstimated(10000, 0.000100, t) }
+func TestEstimated100000_0001(t *testing.T)   { testEstimated(100000, 0.000100, t) }
+func TestEstimated1000000_0001(t *testing.T)  { testEstimated(1000000, 0.000100, t) }
+func TestEstimated10000000_0001(t *testing.T) { testEstimated(10000000, 0.000100, t) }
+func TestEstimated1000_001(t *testing.T)      { testEstimated(1000, 0.001000, t) }
+func TestEstimated10000_001(t *testing.T)     { testEstimated(10000, 0.001000, t) }
+func TestEstimated100000_001(t *testing.T)    { testEstimated(100000, 0.001000, t) }
+func TestEstimated1000000_001(t *testing.T)   { testEstimated(1000000, 0.001000, t) }
+func TestEstimated10000000_001(t *testing.T)  { testEstimated(10000000, 0.001000, t) }
+func TestEstimated1000_01(t *testing.T)       { testEstimated(1000, 0.010000, t) }
+func TestEstimated10000_01(t *testing.T)      { testEstimated(10000, 0.010000, t) }
+func TestEstimated100000_01(t *testing.T)     { testEstimated(100000, 0.010000, t) }
+func TestEstimated1000000_01(t *testing.T)    { testEstimated(1000000, 0.010000, t) }
+func TestEstimated10000000_01(t *testing.T)   { testEstimated(10000000, 0.010000, t) }
 
 func TestMarshalUnmarshalJSON(t *testing.T) {
 	f := New(1000, 4)
@@ -284,37 +292,12 @@ func TestEncodeDecodeGob(t *testing.T) {
 	}
 }
 
-func BenchmarkDirect(b *testing.B) {
-	n := uint(10000)
-	max_k := uint(10)
-	max_load := uint(20)
-	fmt.Printf("m/n")
-	for k := uint(2); k <= max_k; k++ {
-		fmt.Printf("\tk=%v", k)
-	}
-	fmt.Println()
-	for load := uint(2); load <= max_load; load++ {
-		fmt.Print(load)
-		for k := uint(2); k <= max_k; k++ {
-			f := New(n*load, k)
-			fp_rate := f.EstimateFalsePositiveRate(n)
-			fmt.Printf("\t%f", fp_rate)
-		}
-		fmt.Println()
-	}
-}
-
 func BenchmarkEstimated(b *testing.B) {
-	for n := uint(5000); n <= 50000; n += 5000 {
-		fmt.Printf("%v", n)
-		for fp := 0.1; fp >= 0.00001; fp /= 10.0 {
-			fmt.Printf("\t%f", fp)
-			m, k := estimateParameters(n, fp)
+	for n := uint(100000); n <= 100000; n *= 10 {
+		for fp := 0.1; fp >= 0.0001; fp /= 10.0 {
 			f := NewWithEstimates(n, fp)
-			fp_rate := f.EstimateFalsePositiveRate(n)
-			fmt.Printf("\t%v\t%v\t%f", m, k, fp_rate)
+			f.EstimateFalsePositiveRate(n)
 		}
-		fmt.Println()
 	}
 }
 
