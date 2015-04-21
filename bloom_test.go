@@ -371,3 +371,34 @@ func MergeTest(b *testing.B) {
 		b.Errorf("The value exists after an invalid merge")
 	}
 }
+
+func CopyTest(b *testing.B) {
+	f := New(1000, 4)
+	n1 := []byte("f")
+	f.Add(n1)
+
+	// copy here instead of New
+	g := f.Copy()
+	n2 := []byte("g")
+	g.Add(n2)
+
+	n1fb := f.Test(n1)
+	if !n1fb {
+		b.Errorf("The value doesn't exist in original after making a copy")
+	}
+
+	n1gb := g.Test(n1)
+	if !n1gb {
+		b.Errorf("The value doesn't exist in the copy")
+	}
+
+	n2fb := f.Test(n2)
+	if n2fb {
+		b.Errorf("The value exists in the original, it should only exist in copy")
+	}
+
+	n2gb := g.Test(n2)
+	if !n2gb {
+		b.Errorf("The value doesn't exist in copy after Add()")
+	}
+}

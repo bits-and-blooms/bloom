@@ -151,6 +151,13 @@ func (f *BloomFilter) Merge(g *BloomFilter) error {
 	return nil
 }
 
+// Create a copy of a bloom filter.
+func (f *BloomFilter) Copy() *BloomFilter {
+	fc := New(f.m, f.k)
+	fc.Merge(f)
+	return fc
+}
+
 // Tests for the presence of data in the Bloom filter
 // AddString to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) AddString(data string) *BloomFilter {
