@@ -18,21 +18,21 @@ positives. The art is to choose _k_ and _m_ correctly.
 
 In this implementation, the hashing functions used is a local version of FNV, 
 a non-cryptographic hashing function, seeded with the index number of 
-the kth hashing function.
+the k<sup>th</sup> hashing function.
     
-This implementation accepts keys for setting as testing as []byte. Thus, to 
+This implementation accepts keys for setting and testing as `[]byte`. Thus, to 
 add a string item, "Love":
 
     uint n = 1000
     filter := bloom.New(20*n, 5) // load of 20, 5 keys
     filter.Add([]byte("Love"))
     
-Similarly, to test if "Love" is in bloom:
+Similarly, to test if `"Love"` is in bloom:
 
     if filter.Test([]byte("Love"))
     
 For numeric data, I recommend that you look into the binary/encoding library. But,
-for example, to add a uint32 to the filter:
+for example, to add a `uint32` to the filter:
 
     i := uint32(100)
     n1 := make([]byte,4)
