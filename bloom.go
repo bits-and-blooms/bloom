@@ -74,10 +74,10 @@ func New(m uint, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.New(m)}
 }
 
-func fnv64Hash(index uint, data []byte) uint64 {
-	hash := uint64(index) + 14695981039346656037
-	for _, c := range data {
-		hash ^= uint64(c)
+func fnv64Hash(index uint64, data []byte) uint64 {
+	hash := index + 14695981039346656037
+	for i := range data {
+		hash ^= uint64(data[i])
 		hash *= 1099511628211
 	}
 	return hash
@@ -85,8 +85,8 @@ func fnv64Hash(index uint, data []byte) uint64 {
 
 // baseHashes returns the four hash values of data that are used to create k
 // hashes
-func baseHashes(data []byte) []uint64 {
-	return []uint64{
+func baseHashes(data []byte) [4]uint64 {
+	return [4]uint64{
 		fnv64Hash(0, data),
 		fnv64Hash(1, data),
 		fnv64Hash(2, data),
@@ -95,7 +95,7 @@ func baseHashes(data []byte) []uint64 {
 }
 
 // location returns the ith hashed location using the four base hash values
-func (f *BloomFilter) location(h []uint64, i uint) (location uint) {
+func (f *BloomFilter) location(h [4]uint64, i uint) (location uint) {
 	ii := uint64(i)
 	location = uint((h[ii%2] + ii*h[2+(((ii+(ii%2))%4)/2)]) % uint64(f.m))
 	return
