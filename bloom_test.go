@@ -292,6 +292,27 @@ func TestEncodeDecodeGob(t *testing.T) {
 	}
 }
 
+func TestEqual(t *testing.T) {
+	f := New(1000, 4)
+	f1 := New(1000, 4)
+	g := New(1000, 20)
+	h := New(10, 20)
+	n1 := []byte("Bess")
+	f1.Add(n1)
+	if !f.Equal(f) {
+		t.Errorf("%v should be equal to itself", f)
+	}
+	if f.Equal(f1) {
+		t.Errorf("%v should not be equal to %v", f, f1)
+	}
+	if f.Equal(g) {
+		t.Errorf("%v should not be equal to %v", f, g)
+	}
+	if f.Equal(h) {
+		t.Errorf("%v should not be equal to %v", f, h)
+	}
+}
+
 func BenchmarkEstimated(b *testing.B) {
 	for n := uint(100000); n <= 100000; n *= 10 {
 		for fp := 0.1; fp >= 0.0001; fp /= 10.0 {
@@ -372,7 +393,7 @@ func MergeTest(b *testing.B) {
 	}
 }
 
-func CopyTest(b *testing.B) {
+func TestCopy(t *testing.T) {
 	f := New(1000, 4)
 	n1 := []byte("f")
 	f.Add(n1)
@@ -384,21 +405,21 @@ func CopyTest(b *testing.B) {
 
 	n1fb := f.Test(n1)
 	if !n1fb {
-		b.Errorf("The value doesn't exist in original after making a copy")
+		t.Errorf("The value doesn't exist in original after making a copy")
 	}
 
 	n1gb := g.Test(n1)
 	if !n1gb {
-		b.Errorf("The value doesn't exist in the copy")
+		t.Errorf("The value doesn't exist in the copy")
 	}
 
 	n2fb := f.Test(n2)
 	if n2fb {
-		b.Errorf("The value exists in the original, it should only exist in copy")
+		t.Errorf("The value exists in the original, it should only exist in copy")
 	}
 
 	n2gb := g.Test(n2)
 	if !n2gb {
-		b.Errorf("The value doesn't exist in copy after Add()")
+		t.Errorf("The value doesn't exist in copy after Add()")
 	}
 }
