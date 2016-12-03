@@ -2,7 +2,7 @@ Bloom filters
 -------------
 
 [![Master Build Status](https://secure.travis-ci.org/willf/bloom.png?branch=master)](https://travis-ci.org/willf/bloom?branch=master)
-[![Master Coverage Status](https://coveralls.io/repos/willf/bloom/badge.svg?branch=master&service=github)](https://coveralls.io/github/willf/bloom?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/willf/bloom/badge.svg?branch=master)](https://coveralls.io/github/willf/bloom?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/willf/bloom)](https://goreportcard.com/report/github.com/willf/bloom)
 
 A Bloom filter is a representation of a set of _n_ items, where the main
