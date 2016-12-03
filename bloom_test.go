@@ -197,11 +197,11 @@ func chiTestBloom(m, k, rounds uint, elements [][]byte) (succeeds bool) {
 
 	// Each element of results should contain the same value: k * rounds / m.
 	// Let's run a chi-square goodness of fit and see how it fares.
-	var chi_statistic float64
+	var chiStatistic float64
 	e := float64(k*rounds) / float64(m)
 	for i := uint(0); i < m; i++ {
 		chi[i] = math.Pow(float64(results[i])-e, 2.0) / e
-		chi_statistic += chi[i]
+		chiStatistic += chi[i]
 	}
 
 	// this tests at significant level 0.005 up to 20 degrees of freedom
@@ -211,7 +211,7 @@ func chiTestBloom(m, k, rounds uint, elements [][]byte) (succeeds bool) {
 		35.718, 37.156, 38.582, 39.997}
 	df := min(m-1, 20)
 
-	succeeds = table[df-1] > chi_statistic
+	succeeds = table[df-1] > chiStatistic
 	return
 
 }

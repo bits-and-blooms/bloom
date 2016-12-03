@@ -40,7 +40,7 @@ for example, to add a uint32 to the filter:
     f.Add(n1)
 
 Finally, there is a method to estimate the false positive rate of a particular
-bloom filter for a set of size _n_:
+Bloom filter for a set of size _n_:
 
     if filter.EstimateFalsePositiveRate(1000) > 0.001
 
@@ -135,25 +135,24 @@ func (f *BloomFilter) Add(data []byte) *BloomFilter {
 func (f *BloomFilter) Merge(g *BloomFilter) error {
 	// Make sure the m's and k's are the same, otherwise merging has no real use.
 	if f.m != g.m {
-		return fmt.Errorf("m's don't match: %d != %d\n", f.m, g.m)
+		return fmt.Errorf("m's don't match: %d != %d", f.m, g.m)
 	}
 
 	if f.k != g.k {
-		return fmt.Errorf("k's don't match: %d != %d\n", f.m, g.m)
+		return fmt.Errorf("k's don't match: %d != %d", f.m, g.m)
 	}
 
 	f.b.InPlaceUnion(g.b)
 	return nil
 }
 
-// Create a copy of a bloom filter.
+// Copy creates a copy of a Bloom filter.
 func (f *BloomFilter) Copy() *BloomFilter {
 	fc := New(f.m, f.k)
 	fc.Merge(f)
 	return fc
 }
 
-// Tests for the presence of data in the Bloom filter
 // AddString to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) AddString(data string) *BloomFilter {
 	return f.Add([]byte(data))
@@ -315,6 +314,7 @@ func (f *BloomFilter) GobDecode(data []byte) error {
 	return err
 }
 
+// Equal tests for the equality of two Bloom filters
 func (f *BloomFilter) Equal(g *BloomFilter) bool {
 	return f.m == g.m && f.k == g.k && f.b.Equal(g.b)
 }
