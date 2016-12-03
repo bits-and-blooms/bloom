@@ -77,20 +77,20 @@ func New(m uint, k uint) *BloomFilter {
 
 // baseHashes returns the four hash values of data that are used to create k
 // hashes
-func baseHashes(data []byte) []uint64 {
+func baseHashes(data []byte) [4]uint64 {
 	a1 := []byte{1} // to grab another bit of data
 	hasher := murmur3.New128()
 	hasher.Write(data)
 	v1, v2 := hasher.Sum128()
 	hasher.Write(a1)
 	v3, v4 := hasher.Sum128()
-	return []uint64{
+	return [4]uint64{
 		v1, v2, v3, v4,
 	}
 }
 
 // location returns the ith hashed location using the four base hash values
-func (f *BloomFilter) location(h []uint64, i uint) (location uint) {
+func (f *BloomFilter) location(h [4]uint64, i uint) (location uint) {
 	ii := uint64(i)
 	location = uint((h[ii%2] + ii*h[2+(((ii+(ii%2))%4)/2)]) % uint64(f.m))
 	return
@@ -313,4 +313,8 @@ func (f *BloomFilter) GobDecode(data []byte) error {
 	_, err := f.ReadFrom(buf)
 
 	return err
+}
+
+func (f *BloomFilter) Equal(g *BloomFilter) bool {
+	return f.m == g.m && f.k == g.k && f.b.Equal(g.b)
 }
