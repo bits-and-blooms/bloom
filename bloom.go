@@ -57,6 +57,7 @@ import (
 	"io"
 	"math"
 
+	"github.com/spaolacci/murmur3"
 	"github.com/willf/bitset"
 )
 
@@ -74,23 +75,17 @@ func New(m uint, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.New(m)}
 }
 
-func fnv64Hash(index uint, data []byte) uint64 {
-	hash := uint64(index) + 14695981039346656037
-	for _, c := range data {
-		hash ^= uint64(c)
-		hash *= 1099511628211
-	}
-	return hash
-}
-
 // baseHashes returns the four hash values of data that are used to create k
 // hashes
 func baseHashes(data []byte) []uint64 {
+	a1 := []byte{1} // to grab another bit of data
+	hasher := murmur3.New128()
+	hasher.Write(data)
+	v1, v2 := hasher.Sum128()
+	hasher.Write(a1)
+	v3, v4 := hasher.Sum128()
 	return []uint64{
-		fnv64Hash(0, data),
-		fnv64Hash(1, data),
-		fnv64Hash(2, data),
-		fnv64Hash(3, data),
+		v1, v2, v3, v4,
 	}
 }
 
