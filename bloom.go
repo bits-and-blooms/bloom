@@ -16,9 +16,8 @@ the item is in the set. If the item is actually in the set, a Bloom filter will
 never fail (the true positive rate is 1.0); but it is susceptible to false
 positives. The art is to choose _k_ and _m_ correctly.
 
-In this implementation, the hashing functions used is a local version of FNV,
-a non-cryptographic hashing function, seeded with the index number of
-the kth hashing function.
+In this implementation, the hashing functions used is murmurhash,
+a non-cryptographic hashing function.
 
 This implementation accepts keys for setting as testing as []byte. Thus, to
 add a string item, "Love":
