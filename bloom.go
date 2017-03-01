@@ -178,6 +178,17 @@ func (f *BloomFilter) TestString(data string) bool {
 	return f.Test([]byte(data))
 }
 
+// TestLocations returns true if all locations are set in the BloomFilter, false
+// otherwise.
+func (f *BloomFilter) TestLocations(locs []uint64) bool {
+	for i := 0; i < len(locs); i++ {
+		if !f.b.Test(uint(locs[i] % uint64(f.m))) {
+			return false
+		}
+	}
+	return true
+}
+
 // TestAndAdd is the equivalent to calling Test(data) then Add(data).
 // Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
@@ -317,4 +328,23 @@ func (f *BloomFilter) GobDecode(data []byte) error {
 // Equal tests for the equality of two Bloom filters
 func (f *BloomFilter) Equal(g *BloomFilter) bool {
 	return f.m == g.m && f.k == g.k && f.b.Equal(g.b)
+}
+
+// location returns the ith hashed location using the four base hash values
+func location(h [4]uint64, i uint) uint64 {
+	ii := uint64(i)
+	return h[ii%2] + ii*h[2+(((ii+(ii%2))%4)/2)]
+}
+
+// Locations returns a list of hash locations representing a data item.
+func Locations(data []byte, k uint) []uint64 {
+	locs := make([]uint64, k)
+
+	// calculate locations
+	h := baseHashes(data)
+	for i := uint(0); i < k; i++ {
+		locs[i] = location(h, i)
+	}
+
+	return locs
 }

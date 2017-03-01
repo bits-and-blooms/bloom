@@ -515,3 +515,33 @@ func TestCopy(t *testing.T) {
 		t.Errorf("The value doesn't exist in copy after Add()")
 	}
 }
+
+func TestTestLocations(t *testing.T) {
+	f := NewWithEstimates(1000, 0.001)
+	n1 := []byte("Love")
+	n2 := []byte("is")
+	n3 := []byte("in")
+	n4 := []byte("bloom")
+	f.Add(n1)
+	n3a := f.TestLocations(Locations(n3, f.K()))
+	f.Add(n3)
+	n1b := f.TestLocations(Locations(n1, f.K()))
+	n2b := f.TestLocations(Locations(n2, f.K()))
+	n3b := f.TestLocations(Locations(n3, f.K()))
+	n4b := f.TestLocations(Locations(n4, f.K()))
+	if !n1b {
+		t.Errorf("%v should be in.", n1)
+	}
+	if n2b {
+		t.Errorf("%v should not be in.", n2)
+	}
+	if n3a {
+		t.Errorf("%v should not be in the first time we look.", n3)
+	}
+	if !n3b {
+		t.Errorf("%v should be in the second time we look.", n3)
+	}
+	if n4b {
+		t.Errorf("%v should be in.", n4)
+	}
+}
