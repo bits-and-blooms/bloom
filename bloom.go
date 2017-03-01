@@ -90,10 +90,14 @@ func baseHashes(data []byte) [4]uint64 {
 }
 
 // location returns the ith hashed location using the four base hash values
-func (f *BloomFilter) location(h [4]uint64, i uint) (location uint) {
+func location(h [4]uint64, i uint) uint64 {
 	ii := uint64(i)
-	location = uint((h[ii%2] + ii*h[2+(((ii+(ii%2))%4)/2)]) % uint64(f.m))
-	return
+	return h[ii%2] + ii*h[2+(((ii+(ii%2))%4)/2)]
+}
+
+// location returns the ith hashed location using the four base hash values
+func (f *BloomFilter) location(h [4]uint64, i uint) uint {
+	return uint(location(h, i) % uint64(f.m))
 }
 
 // EstimateParameters estimates requirements for m and k.
@@ -328,12 +332,6 @@ func (f *BloomFilter) GobDecode(data []byte) error {
 // Equal tests for the equality of two Bloom filters
 func (f *BloomFilter) Equal(g *BloomFilter) bool {
 	return f.m == g.m && f.k == g.k && f.b.Equal(g.b)
-}
-
-// location returns the ith hashed location using the four base hash values
-func location(h [4]uint64, i uint) uint64 {
-	ii := uint64(i)
-	return h[ii%2] + ii*h[2+(((ii+(ii%2))%4)/2)]
 }
 
 // Locations returns a list of hash locations representing a data item.
