@@ -63,5 +63,6 @@ make help
 
 Before committing the code, please check if it passes all tests using (note: this will install some dependencies):
 ```bash
+make deps
 make qa
 ```
