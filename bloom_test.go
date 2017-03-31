@@ -283,6 +283,16 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestUnmarshalInvalidJSON(t *testing.T) {
+	data := []byte("{invalid}")
+
+	var g BloomFilter
+	err := g.UnmarshalJSON(data)
+	if err == nil {
+		t.Error("expected error while unmarshalling invalid data")
+	}
+}
+
 func TestWriteToReadFrom(t *testing.T) {
 	var b bytes.Buffer
 	f := New(1000, 4)
