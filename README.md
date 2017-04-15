@@ -16,7 +16,7 @@ In this implementation, the hashing functions used is [murmurhash](github.com/sp
 This implementation accepts keys for setting and testing as `[]byte`. Thus, to
 add a string item, `"Love"`:
 
-    uint n = 1000
+    n := uint(1000)
     filter := bloom.New(20*n, 5) // load of 20, 5 keys
     filter.Add([]byte("Love"))
 
