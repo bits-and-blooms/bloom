@@ -80,9 +80,9 @@ func New(m uint, k uint) *BloomFilter {
 func baseHashes(data []byte) [4]uint64 {
 	a1 := []byte{1} // to grab another bit of data
 	hasher := murmur3.New128()
-	hasher.Write(data) // #nosec
+	_, _ = hasher.Write(data)
 	v1, v2 := hasher.Sum128()
-	hasher.Write(a1) // #nosec
+	_, _ = hasher.Write(a1)
 	v3, v4 := hasher.Sum128()
 	return [4]uint64{
 		v1, v2, v3, v4,
@@ -149,7 +149,7 @@ func (f *BloomFilter) Merge(g *BloomFilter) error {
 // Copy creates a copy of a Bloom filter.
 func (f *BloomFilter) Copy() *BloomFilter {
 	fc := New(f.m, f.k)
-	fc.Merge(f) // #nosec
+	_ = fc.Merge(f)
 	return fc
 }
 
