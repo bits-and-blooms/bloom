@@ -462,9 +462,7 @@ func TestMerge(t *testing.T) {
 	n4 := []byte("j")
 	j.Add(n4)
 
-	var err error
-
-	err = f.Merge(g)
+	err := f.Merge(g)
 	if err != nil {
 		t.Errorf("There should be no error when merging two similar filters")
 	}
