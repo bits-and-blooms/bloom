@@ -283,6 +283,16 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestUnmarshalInvalidJSON(t *testing.T) {
+	data := []byte("{invalid}")
+
+	var g BloomFilter
+	err := g.UnmarshalJSON(data)
+	if err == nil {
+		t.Error("expected error while unmarshalling invalid data")
+	}
+}
+
 func TestWriteToReadFrom(t *testing.T) {
 	var b bytes.Buffer
 	f := New(1000, 4)
@@ -435,7 +445,7 @@ func BenchmarkCombinedTestAndAdd(b *testing.B) {
 	}
 }
 
-func MergeTest(b *testing.B) {
+func TestMerge(t *testing.T) {
 	f := New(1000, 4)
 	n1 := []byte("f")
 	f.Add(n1)
@@ -452,36 +462,34 @@ func MergeTest(b *testing.B) {
 	n4 := []byte("j")
 	j.Add(n4)
 
-	var err error
-
-	err = f.Merge(g)
+	err := f.Merge(g)
 	if err != nil {
-		b.Errorf("There should be no error when merging two similar filters")
+		t.Errorf("There should be no error when merging two similar filters")
 	}
 
 	err = f.Merge(h)
 	if err == nil {
-		b.Errorf("There should be an error when merging filters with mismatched m")
+		t.Errorf("There should be an error when merging filters with mismatched m")
 	}
 
 	err = f.Merge(j)
 	if err == nil {
-		b.Errorf("There should be an error when merging filters with mismatched k")
+		t.Errorf("There should be an error when merging filters with mismatched k")
 	}
 
 	n2b := f.Test(n2)
 	if !n2b {
-		b.Errorf("The value doesn't exist after a valid merge")
+		t.Errorf("The value doesn't exist after a valid merge")
 	}
 
 	n3b := f.Test(n3)
 	if n3b {
-		b.Errorf("The value exists after an invalid merge")
+		t.Errorf("The value exists after an invalid merge")
 	}
 
 	n4b := f.Test(n4)
 	if n4b {
-		b.Errorf("The value exists after an invalid merge")
+		t.Errorf("The value exists after an invalid merge")
 	}
 }
 
@@ -545,5 +553,33 @@ func TestFrom(t *testing.T) {
 	bf = From(data, k)
 	if !bf.Test(test) {
 		t.Errorf("Bloom filter should contain the value")
+
+func TestTestLocations(t *testing.T) {
+	f := NewWithEstimates(1000, 0.001)
+	n1 := []byte("Love")
+	n2 := []byte("is")
+	n3 := []byte("in")
+	n4 := []byte("bloom")
+	f.Add(n1)
+	n3a := f.TestLocations(Locations(n3, f.K()))
+	f.Add(n3)
+	n1b := f.TestLocations(Locations(n1, f.K()))
+	n2b := f.TestLocations(Locations(n2, f.K()))
+	n3b := f.TestLocations(Locations(n3, f.K()))
+	n4b := f.TestLocations(Locations(n4, f.K()))
+	if !n1b {
+		t.Errorf("%v should be in.", n1)
+	}
+	if n2b {
+		t.Errorf("%v should not be in.", n2)
+	}
+	if n3a {
+		t.Errorf("%v should not be in the first time we look.", n3)
+	}
+	if !n3b {
+		t.Errorf("%v should be in the second time we look.", n3)
+	}
+	if n4b {
+		t.Errorf("%v should be in.", n4)
 	}
 }
