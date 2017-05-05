@@ -524,6 +524,36 @@ func TestCopy(t *testing.T) {
 	}
 }
 
+func TestFrom(t *testing.T) {
+	var (
+		k    = uint(5)
+		data = make([]uint64, 10)
+		test = []byte("test")
+	)
+
+	bf := From(data, k)
+	if bf.K() != k {
+		t.Errorf("Constant k does not match the expected value")
+	}
+
+	if bf.Cap() != uint(len(data)*64) {
+		t.Errorf("Capacity does not match the expected value")
+	}
+
+	if bf.Test(test) {
+		t.Errorf("Bloom filter should not contain the value")
+	}
+
+	bf.Add(test)
+	if !bf.Test(test) {
+		t.Errorf("Bloom filter should contain the value")
+	}
+
+	// create a new Bloom filter from an existing (populated) data slice.
+	bf = From(data, k)
+	if !bf.Test(test) {
+		t.Errorf("Bloom filter should contain the value")
+
 func TestTestLocations(t *testing.T) {
 	f := NewWithEstimates(1000, 0.001)
 	n1 := []byte("Love")

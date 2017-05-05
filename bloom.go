@@ -16,9 +16,8 @@ the item is in the set. If the item is actually in the set, a Bloom filter will
 never fail (the true positive rate is 1.0); but it is susceptible to false
 positives. The art is to choose _k_ and _m_ correctly.
 
-In this implementation, the hashing functions used is a local version of FNV,
-a non-cryptographic hashing function, seeded with the index number of
-the kth hashing function.
+In this implementation, the hashing functions used is murmurhash,
+a non-cryptographic hashing function.
 
 This implementation accepts keys for setting as testing as []byte. Thus, to
 add a string item, "Love":
@@ -73,6 +72,13 @@ type BloomFilter struct {
 // New creates a new Bloom filter with _m_ bits and _k_ hashing functions
 func New(m uint, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.New(m)}
+}
+
+// From creates a new Bloom filter with len(_data_) * 64 bits and _k_ hashing
+// functions. The data slice is not going to be reset.
+func From(data []uint64, k uint) *BloomFilter {
+	m := uint(len(data) * 64)
+	return &BloomFilter{m, k, bitset.From(data)}
 }
 
 // baseHashes returns the four hash values of data that are used to create k
