@@ -553,6 +553,8 @@ func TestFrom(t *testing.T) {
 	bf = From(data, k)
 	if !bf.Test(test) {
 		t.Errorf("Bloom filter should contain the value")
+	}
+}
 
 func TestTestLocations(t *testing.T) {
 	f := NewWithEstimates(1000, 0.001)
