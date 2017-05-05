@@ -25,7 +25,7 @@ Similarly, to test if `"Love"` is in bloom:
 
     if filter.Test([]byte("Love"))
 
-For numeric data, I recommend that you look into the binary/encoding library. But, for example, to add a `uint32` to the filter:
+For numeric data, I recommend that you look into the encoding/binary library. But, for example, to add a `uint32` to the filter:
 
     i := uint32(100)
     n1 := make([]byte, 4)
