@@ -115,6 +115,16 @@ func TestBasicUint32(t *testing.T) {
 	}
 }
 
+func TestNewWithLowNumbers(t *testing.T) {
+	f := New(0, 0)
+	if f.k != 1 {
+		t.Errorf("%v should be 1", f.k)
+	}
+	if f.m != 1 {
+		t.Errorf("%v should be 1", f.m)
+	}
+}
+
 func TestString(t *testing.T) {
 	f := NewWithEstimates(1000, 0.001)
 	n1 := "Love"
