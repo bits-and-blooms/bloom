@@ -61,8 +61,8 @@ import (
 // 	}
 // }
 
-func TestBasic(t *testing.T) {
-	f := New(1000, 4)
+func TestBasicXX(t *testing.T) {
+	f := NewXX(1000, 4)
 	n1 := []byte("Bess")
 	n2 := []byte("Jane")
 	n3 := []byte("Emma")
@@ -85,8 +85,8 @@ func TestBasic(t *testing.T) {
 	}
 }
 
-func TestBasicUint32(t *testing.T) {
-	f := New(1000, 4)
+func TestBasicUint32XX(t *testing.T) {
+	f := NewXX(1000, 4)
 	n1 := make([]byte, 4)
 	n2 := make([]byte, 4)
 	n3 := make([]byte, 4)
@@ -115,8 +115,8 @@ func TestBasicUint32(t *testing.T) {
 	}
 }
 
-func TestNewWithLowNumbers(t *testing.T) {
-	f := New(0, 0)
+func TestNewWithLowNumbersXX(t *testing.T) {
+	f := NewXX(0, 0)
 	if f.k != 1 {
 		t.Errorf("%v should be 1", f.k)
 	}
@@ -125,8 +125,8 @@ func TestNewWithLowNumbers(t *testing.T) {
 	}
 }
 
-func TestString(t *testing.T) {
-	f := NewWithEstimates(1000, 0.001)
+func TestStringXX(t *testing.T) {
+	f := NewWithEstimatesXX(1000, 0.001)
 	n1 := "Love"
 	n2 := "is"
 	n3 := "in"
@@ -152,33 +152,26 @@ func TestString(t *testing.T) {
 
 }
 
-func testEstimated(n uint, maxFp float64, t *testing.T) {
+func testEstimatedXX(n uint, maxFp float64, t *testing.T) {
 	m, k := EstimateParameters(n, maxFp)
-	f := NewWithEstimates(n, maxFp)
+	f := NewWithEstimatesXX(n, maxFp)
 	fpRate := f.EstimateFalsePositiveRate(n)
 	if fpRate > 1.5*maxFp {
 		t.Errorf("False positive rate too high: n: %v; m: %v; k: %v; maxFp: %f; fpRate: %f, fpRate/maxFp: %f", n, m, k, maxFp, fpRate, fpRate/maxFp)
 	}
 }
 
-func TestEstimated1000_0001(t *testing.T)   { testEstimated(1000, 0.000100, t) }
-func TestEstimated10000_0001(t *testing.T)  { testEstimated(10000, 0.000100, t) }
-func TestEstimated100000_0001(t *testing.T) { testEstimated(100000, 0.000100, t) }
+func TestEstimated1000_0001XX(t *testing.T)   { testEstimated(1000, 0.000100, t) }
+func TestEstimated10000_0001XX(t *testing.T)  { testEstimated(10000, 0.000100, t) }
+func TestEstimated100000_0001XX(t *testing.T) { testEstimated(100000, 0.000100, t) }
 
-func TestEstimated1000_001(t *testing.T)   { testEstimated(1000, 0.001000, t) }
-func TestEstimated10000_001(t *testing.T)  { testEstimated(10000, 0.001000, t) }
-func TestEstimated100000_001(t *testing.T) { testEstimated(100000, 0.001000, t) }
+func TestEstimated1000_001XX(t *testing.T)   { testEstimated(1000, 0.001000, t) }
+func TestEstimated10000_001XX(t *testing.T)  { testEstimated(10000, 0.001000, t) }
+func TestEstimated100000_001XX(t *testing.T) { testEstimated(100000, 0.001000, t) }
 
-func TestEstimated1000_01(t *testing.T)   { testEstimated(1000, 0.010000, t) }
-func TestEstimated10000_01(t *testing.T)  { testEstimated(10000, 0.010000, t) }
-func TestEstimated100000_01(t *testing.T) { testEstimated(100000, 0.010000, t) }
-
-func min(a, b uint) uint {
-	if a < b {
-		return a
-	}
-	return b
-}
+func TestEstimated1000_01XX(t *testing.T)   { testEstimated(1000, 0.010000, t) }
+func TestEstimated10000_01XX(t *testing.T)  { testEstimated(10000, 0.010000, t) }
+func TestEstimated100000_01XX(t *testing.T) { testEstimated(100000, 0.010000, t) }
 
 // The following function courtesy of Nick @turgon
 // This helper function ranges over the input data, applying the hashing
@@ -193,13 +186,13 @@ func min(a, b uint) uint {
 // Once the results are collected, we can run a chi squared goodness of fit
 // test, comparing the result histogram with the uniform distribition.
 // This yields a test statistic with degrees-of-freedom of m-1.
-func chiTestBloom(m, k, rounds uint, elements [][]byte) (succeeds bool) {
-	f := New(m, k)
+func chiTestBloomXX(m, k, rounds uint, elements [][]byte) (succeeds bool) {
+	f := NewXX(m, k)
 	results := make([]uint, m)
 	chi := make([]float64, m)
 
 	for _, data := range elements {
-		h := baseHashesMM(data)
+		h := baseHashesXX(data)
 		for i := uint(0); i < f.k; i++ {
 			results[f.location(h, i)]++
 		}
@@ -226,7 +219,7 @@ func chiTestBloom(m, k, rounds uint, elements [][]byte) (succeeds bool) {
 
 }
 
-func TestLocation(t *testing.T) {
+func TestLocationXX(t *testing.T) {
 	var m, k, rounds uint
 
 	m = 8
@@ -246,29 +239,29 @@ func TestLocation(t *testing.T) {
 		elements[x] = data
 	}
 
-	succeeds := chiTestBloom(m, k, rounds, elements)
+	succeeds := chiTestBloomXX(m, k, rounds, elements)
 	if !succeeds {
 		t.Error("random assignment is too unrandom")
 	}
 
 }
 
-func TestCap(t *testing.T) {
-	f := New(1000, 4)
+func TestCapXX(t *testing.T) {
+	f := NewXX(1000, 4)
 	if f.Cap() != f.m {
 		t.Error("not accessing Cap() correctly")
 	}
 }
 
-func TestK(t *testing.T) {
-	f := New(1000, 4)
+func TestKXX(t *testing.T) {
+	f := NewXX(1000, 4)
 	if f.K() != f.k {
 		t.Error("not accessing K() correctly")
 	}
 }
 
-func TestMarshalUnmarshalJSON(t *testing.T) {
-	f := New(1000, 4)
+func TestMarshalUnmarshalJSONXX(t *testing.T) {
+	f := NewXX(1000, 4)
 	data, err := json.Marshal(f)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -293,7 +286,7 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	}
 }
 
-func TestUnmarshalInvalidJSON(t *testing.T) {
+func TestUnmarshalInvalidJSONXX(t *testing.T) {
 	data := []byte("{invalid}")
 
 	var g BloomFilter
@@ -303,15 +296,15 @@ func TestUnmarshalInvalidJSON(t *testing.T) {
 	}
 }
 
-func TestWriteToReadFrom(t *testing.T) {
+func TestWriteToReadFromXX(t *testing.T) {
 	var b bytes.Buffer
-	f := New(1000, 4)
+	f := NewXX(1000, 4)
 	_, err := f.WriteTo(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	g := New(1000, 1)
+	g := NewXX(1000, 1)
 	_, err = g.ReadFrom(&b)
 	if err != nil {
 		t.Fatal(err)
@@ -332,8 +325,8 @@ func TestWriteToReadFrom(t *testing.T) {
 	g.Test([]byte(""))
 }
 
-func TestReadWriteBinary(t *testing.T) {
-	f := New(1000, 4)
+func TestReadWriteBinaryXX(t *testing.T) {
+	f := NewXX(1000, 4)
 	var buf bytes.Buffer
 	bytesWritten, err := f.WriteTo(&buf)
 	if err != nil {
@@ -357,6 +350,9 @@ func TestReadWriteBinary(t *testing.T) {
 	if g.k != f.k {
 		t.Error("invalid k value")
 	}
+	if g.hashType != f.hashType {
+		t.Error("invalid hashType value")
+	}
 	if g.b == nil {
 		t.Fatal("bitset is nil")
 	}
@@ -365,8 +361,8 @@ func TestReadWriteBinary(t *testing.T) {
 	}
 }
 
-func TestEncodeDecodeGob(t *testing.T) {
-	f := New(1000, 4)
+func TestEncodeDecodeGobXX(t *testing.T) {
+	f := NewXX(1000, 4)
 	f.Add([]byte("one"))
 	f.Add([]byte("two"))
 	f.Add([]byte("three"))
@@ -404,11 +400,11 @@ func TestEncodeDecodeGob(t *testing.T) {
 	}
 }
 
-func TestEqual(t *testing.T) {
-	f := New(1000, 4)
-	f1 := New(1000, 4)
-	g := New(1000, 20)
-	h := New(10, 20)
+func TestEqualXX(t *testing.T) {
+	f := NewXX(1000, 4)
+	f1 := NewXX(1000, 4)
+	g := NewXX(1000, 20)
+	h := NewXX(10, 20)
 	n1 := []byte("Bess")
 	f1.Add(n1)
 	if !f.Equal(f) {
@@ -425,17 +421,17 @@ func TestEqual(t *testing.T) {
 	}
 }
 
-func BenchmarkEstimated(b *testing.B) {
+func BenchmarkEstimatedXX(b *testing.B) {
 	for n := uint(100000); n <= 100000; n *= 10 {
 		for fp := 0.1; fp >= 0.0001; fp /= 10.0 {
-			f := NewWithEstimates(n, fp)
+			f := NewWithEstimatesXX(n, fp)
 			f.EstimateFalsePositiveRate(n)
 		}
 	}
 }
 
-func BenchmarkSeparateTestAndAdd(b *testing.B) {
-	f := NewWithEstimates(uint(b.N), 0.0001)
+func BenchmarkSeparateTestAndAddXX(b *testing.B) {
+	f := NewWithEstimatesXX(uint(b.N), 0.0001)
 	key := make([]byte, 100)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -445,8 +441,8 @@ func BenchmarkSeparateTestAndAdd(b *testing.B) {
 	}
 }
 
-func BenchmarkCombinedTestAndAdd(b *testing.B) {
-	f := NewWithEstimates(uint(b.N), 0.0001)
+func BenchmarkCombinedTestAndAddXX(b *testing.B) {
+	f := NewWithEstimatesXX(uint(b.N), 0.0001)
 	key := make([]byte, 100)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -455,20 +451,20 @@ func BenchmarkCombinedTestAndAdd(b *testing.B) {
 	}
 }
 
-func TestMerge(t *testing.T) {
-	f := New(1000, 4)
+func TestMergeXX(t *testing.T) {
+	f := NewXX(1000, 4)
 	n1 := []byte("f")
 	f.Add(n1)
 
-	g := New(1000, 4)
+	g := NewXX(1000, 4)
 	n2 := []byte("g")
 	g.Add(n2)
 
-	h := New(999, 4)
+	h := NewXX(999, 4)
 	n3 := []byte("h")
 	h.Add(n3)
 
-	j := New(1000, 5)
+	j := NewXX(1000, 5)
 	n4 := []byte("j")
 	j.Add(n4)
 
@@ -503,8 +499,8 @@ func TestMerge(t *testing.T) {
 	}
 }
 
-func TestCopy(t *testing.T) {
-	f := New(1000, 4)
+func TestCopyXX(t *testing.T) {
+	f := NewXX(1000, 4)
 	n1 := []byte("f")
 	f.Add(n1)
 
@@ -534,14 +530,14 @@ func TestCopy(t *testing.T) {
 	}
 }
 
-func TestFrom(t *testing.T) {
+func TestFromXX(t *testing.T) {
 	var (
 		k    = uint(5)
 		data = make([]uint64, 10)
 		test = []byte("test")
 	)
 
-	bf := From(data, k)
+	bf := FromXX(data, k)
 	if bf.K() != k {
 		t.Errorf("Constant k does not match the expected value")
 	}
@@ -560,25 +556,25 @@ func TestFrom(t *testing.T) {
 	}
 
 	// create a new Bloom filter from an existing (populated) data slice.
-	bf = From(data, k)
+	bf = FromXX(data, k)
 	if !bf.Test(test) {
 		t.Errorf("Bloom filter should contain the value")
 	}
 }
 
-func TestTestLocations(t *testing.T) {
-	f := NewWithEstimates(1000, 0.001)
+func TestTestLocationsXX(t *testing.T) {
+	f := NewWithEstimatesXX(1000, 0.001)
 	n1 := []byte("Love")
 	n2 := []byte("is")
 	n3 := []byte("in")
 	n4 := []byte("bloom")
 	f.Add(n1)
-	n3a := f.TestLocations(Locations(n3, f.K()))
+	n3a := f.TestLocations(LocationsXX(n3, f.K()))
 	f.Add(n3)
-	n1b := f.TestLocations(Locations(n1, f.K()))
-	n2b := f.TestLocations(Locations(n2, f.K()))
-	n3b := f.TestLocations(Locations(n3, f.K()))
-	n4b := f.TestLocations(Locations(n4, f.K()))
+	n1b := f.TestLocations(LocationsXX(n1, f.K()))
+	n2b := f.TestLocations(LocationsXX(n2, f.K()))
+	n3b := f.TestLocations(LocationsXX(n3, f.K()))
+	n4b := f.TestLocations(LocationsXX(n4, f.K()))
 	if !n1b {
 		t.Errorf("%v should be in.", n1)
 	}

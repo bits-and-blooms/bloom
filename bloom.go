@@ -56,17 +56,24 @@ import (
 	"io"
 	"math"
 
+	"github.com/cespare/xxhash"
 	"github.com/spaolacci/murmur3"
 	"github.com/willf/bitset"
+)
+
+const (
+	XXHASH  uint = 1
+	MURMUR3 uint = 2
 )
 
 // A BloomFilter is a representation of a set of _n_ items, where the main
 // requirement is to make membership queries; _i.e._, whether an item is a
 // member of a set.
 type BloomFilter struct {
-	m uint
-	k uint
-	b *bitset.BitSet
+	m        uint
+	k        uint
+	b        *bitset.BitSet
+	hashType uint
 }
 
 func max(x, y uint) uint {
@@ -76,22 +83,38 @@ func max(x, y uint) uint {
 	return y
 }
 
+func (f *BloomFilter) baseHashes(data []byte) [4]uint64 {
+	if f.hashType == MURMUR3 {
+		return baseHashesMM(data)
+	}
+	return baseHashesXX(data)
+}
+
 // New creates a new Bloom filter with _m_ bits and _k_ hashing functions
 // We force _m_ and _k_ to be at least one to avoid panics.
 func New(m uint, k uint) *BloomFilter {
-	return &BloomFilter{max(1, m), max(1, k), bitset.New(m)}
+	return &BloomFilter{max(1, m), max(1, k), bitset.New(m), MURMUR3}
+}
+
+func NewXX(m uint, k uint) *BloomFilter {
+	return &BloomFilter{max(1, m), max(1, k), bitset.New(m), XXHASH}
 }
 
 // From creates a new Bloom filter with len(_data_) * 64 bits and _k_ hashing
 // functions. The data slice is not going to be reset.
 func From(data []uint64, k uint) *BloomFilter {
 	m := uint(len(data) * 64)
-	return &BloomFilter{m, k, bitset.From(data)}
+	return &BloomFilter{m, k, bitset.From(data), MURMUR3}
+}
+
+func FromXX(data []uint64, k uint) *BloomFilter {
+	m := uint(len(data) * 64)
+	return &BloomFilter{m, k, bitset.From(data), XXHASH}
 }
 
 // baseHashes returns the four hash values of data that are used to create k
 // hashes
-func baseHashes(data []byte) [4]uint64 {
+func baseHashesMM(data []byte) [4]uint64 {
 	a1 := []byte{1} // to grab another bit of data
 	hasher := murmur3.New128()
 	hasher.Write(data) // #nosec
@@ -101,6 +124,19 @@ func baseHashes(data []byte) [4]uint64 {
 	return [4]uint64{
 		v1, v2, v3, v4,
 	}
+}
+
+func baseHashesXX(data []byte) [4]uint64 {
+	a1 := []byte{1} // to grab another bit of data
+	var result [4]uint64
+	hasher := xxhash.New()
+	hasher.Write(data) // #nosec
+	result[0] = hasher.Sum64()
+	for i := 1; i <= 3; i++ {
+		hasher.Write(a1) // #nosec
+		result[i] = hasher.Sum64()
+	}
+	return result
 }
 
 // location returns the ith hashed location using the four base hash values
@@ -130,6 +166,11 @@ func NewWithEstimates(n uint, fp float64) *BloomFilter {
 	return New(m, k)
 }
 
+func NewWithEstimatesXX(n uint, fp float64) *BloomFilter {
+	m, k := EstimateParameters(n, fp)
+	return NewXX(m, k)
+}
+
 // Cap returns the capacity, _m_, of a Bloom filter
 func (f *BloomFilter) Cap() uint {
 	return f.m
@@ -142,7 +183,7 @@ func (f *BloomFilter) K() uint {
 
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) Add(data []byte) *BloomFilter {
-	h := baseHashes(data)
+	h := f.baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
 		f.b.Set(f.location(h, i))
 	}
@@ -151,6 +192,10 @@ func (f *BloomFilter) Add(data []byte) *BloomFilter {
 
 // Merge the data from two Bloom Filters.
 func (f *BloomFilter) Merge(g *BloomFilter) error {
+	if f.hashType != g.hashType {
+		return fmt.Errorf("hashType's don't match: %s != %s", f.hashType, g.hashType)
+	}
+
 	// Make sure the m's and k's are the same, otherwise merging has no real use.
 	if f.m != g.m {
 		return fmt.Errorf("m's don't match: %d != %d", f.m, g.m)
@@ -167,6 +212,9 @@ func (f *BloomFilter) Merge(g *BloomFilter) error {
 // Copy creates a copy of a Bloom filter.
 func (f *BloomFilter) Copy() *BloomFilter {
 	fc := New(f.m, f.k)
+	if f.hashType == XXHASH {
+		fc = NewXX(f.m, f.k)
+	}
 	fc.Merge(f) // #nosec
 	return fc
 }
@@ -180,7 +228,7 @@ func (f *BloomFilter) AddString(data string) *BloomFilter {
 // If true, the result might be a false positive. If false, the data
 // is definitely not in the set.
 func (f *BloomFilter) Test(data []byte) bool {
-	h := baseHashes(data)
+	h := f.baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
 		if !f.b.Test(f.location(h, i)) {
 			return false
@@ -211,7 +259,7 @@ func (f *BloomFilter) TestLocations(locs []uint64) bool {
 // Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	present := true
-	h := baseHashes(data)
+	h := f.baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
 		l := f.location(h, i)
 		if !f.b.Test(l) {
@@ -262,14 +310,15 @@ func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fpRate float64) {
 
 // bloomFilterJSON is an unexported type for marshaling/unmarshaling BloomFilter struct.
 type bloomFilterJSON struct {
-	M uint           `json:"m"`
-	K uint           `json:"k"`
-	B *bitset.BitSet `json:"b"`
+	M        uint           `json:"m"`
+	K        uint           `json:"k"`
+	B        *bitset.BitSet `json:"b"`
+	HashType uint           `json:hashType`
 }
 
 // MarshalJSON implements json.Marshaler interface.
 func (f *BloomFilter) MarshalJSON() ([]byte, error) {
-	return json.Marshal(bloomFilterJSON{f.m, f.k, f.b})
+	return json.Marshal(bloomFilterJSON{f.m, f.k, f.b, f.hashType})
 }
 
 // UnmarshalJSON implements json.Unmarshaler interface.
@@ -282,6 +331,7 @@ func (f *BloomFilter) UnmarshalJSON(data []byte) error {
 	f.m = j.M
 	f.k = j.K
 	f.b = j.B
+	f.hashType = j.HashType
 	return nil
 }
 
@@ -296,20 +346,28 @@ func (f *BloomFilter) WriteTo(stream io.Writer) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	err = binary.Write(stream, binary.BigEndian, uint64(f.hashType))
+	if err != nil {
+		return 0, err
+	}
 	numBytes, err := f.b.WriteTo(stream)
-	return numBytes + int64(2*binary.Size(uint64(0))), err
+	return numBytes + int64(3*binary.Size(uint64(0))), err
 }
 
 // ReadFrom reads a binary representation of the BloomFilter (such as might
 // have been written by WriteTo()) from an i/o stream. It returns the number
 // of bytes read.
 func (f *BloomFilter) ReadFrom(stream io.Reader) (int64, error) {
-	var m, k uint64
+	var m, k, hashType uint64
 	err := binary.Read(stream, binary.BigEndian, &m)
 	if err != nil {
 		return 0, err
 	}
 	err = binary.Read(stream, binary.BigEndian, &k)
+	if err != nil {
+		return 0, err
+	}
+	err = binary.Read(stream, binary.BigEndian, &hashType)
 	if err != nil {
 		return 0, err
 	}
@@ -320,8 +378,9 @@ func (f *BloomFilter) ReadFrom(stream io.Reader) (int64, error) {
 	}
 	f.m = uint(m)
 	f.k = uint(k)
+	f.hashType = uint(hashType)
 	f.b = b
-	return numBytes + int64(2*binary.Size(uint64(0))), nil
+	return numBytes + int64(3*binary.Size(uint64(0))), nil
 }
 
 // GobEncode implements gob.GobEncoder interface.
@@ -345,7 +404,7 @@ func (f *BloomFilter) GobDecode(data []byte) error {
 
 // Equal tests for the equality of two Bloom filters
 func (f *BloomFilter) Equal(g *BloomFilter) bool {
-	return f.m == g.m && f.k == g.k && f.b.Equal(g.b)
+	return f.m == g.m && f.k == g.k && f.hashType == g.hashType && f.b.Equal(g.b)
 }
 
 // Locations returns a list of hash locations representing a data item.
@@ -353,7 +412,19 @@ func Locations(data []byte, k uint) []uint64 {
 	locs := make([]uint64, k)
 
 	// calculate locations
-	h := baseHashes(data)
+	h := baseHashesMM(data)
+	for i := uint(0); i < k; i++ {
+		locs[i] = location(h, i)
+	}
+
+	return locs
+}
+
+func LocationsXX(data []byte, k uint) []uint64 {
+	locs := make([]uint64, k)
+
+	// calculate locations
+	h := baseHashesXX(data)
 	for i := uint(0); i < k; i++ {
 		locs[i] = location(h, i)
 	}
