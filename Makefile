@@ -4,6 +4,9 @@
 # @link        https://github.com/willf/bloom
 # ------------------------------------------------------------------------------
 
+SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+include $(SELF_DIR)/.ci/common.mk
+
 # List special make targets that are not associated with files
 .PHONY: help all test format fmtcheck vet lint coverage cyclo ineffassign misspell structcheck varcheck errcheck gosimple astscan qa deps clean nuke
 
@@ -83,6 +86,7 @@ all: help
 test:
 	@mkdir -p target/test
 	@mkdir -p target/report
+	@which go-junit-report > /dev/null || go get -u github.com/sectioneight/go-junit-report
 	GOPATH=$(GOPATH) \
 	go test \
 	-covermode=atomic \
@@ -92,7 +96,7 @@ test:
 	-memprofile=target/report/mem.out \
 	-mutexprofile=target/report/mutex.out \
 	-coverprofile=target/report/coverage.out \
-	-v ./... | \
+	-v ./ | \
 	tee >(PATH=$(GOPATH)/bin:$(PATH) go-junit-report > target/test/report.xml); \
 	test $${PIPESTATUS[0]} -eq 0
 
@@ -168,24 +172,12 @@ docs:
 	@echo '<html><head><meta http-equiv="refresh" content="0;./127.0.0.1:6060/pkg/'${CVSPATH}'/'${PROJECT}'/index.html"/></head><a href="./127.0.0.1:6060/pkg/'${CVSPATH}'/'${PROJECT}'/index.html">'${PKGNAME}' Documentation ...</a></html>' > target/docs/index.html
 
 # Alias to run all quality-assurance checks
-qa: fmtcheck test vet lint coverage cyclo ineffassign misspell structcheck varcheck errcheck gosimple astscan
+qa: test coverage
 
 # --- INSTALL ---
 
 # Get the dependencies
-deps:
-	GOPATH=$(GOPATH) go get ./...
-	GOPATH=$(GOPATH) go get github.com/golang/lint/golint
-	GOPATH=$(GOPATH) go get github.com/jstemmer/go-junit-report
-	GOPATH=$(GOPATH) go get github.com/axw/gocov/gocov
-	GOPATH=$(GOPATH) go get github.com/fzipp/gocyclo
-	GOPATH=$(GOPATH) go get github.com/gordonklaus/ineffassign
-	GOPATH=$(GOPATH) go get github.com/client9/misspell/cmd/misspell
-	GOPATH=$(GOPATH) go get github.com/opennota/check/cmd/structcheck
-	GOPATH=$(GOPATH) go get github.com/opennota/check/cmd/varcheck
-	GOPATH=$(GOPATH) go get github.com/kisielk/errcheck
-	GOPATH=$(GOPATH) go get honnef.co/go/tools/cmd/gosimple
-	GOPATH=$(GOPATH) go get github.com/GoASTScanner/gas
+deps: install-glide install-vendor
 
 # Remove any build artifact
 clean:

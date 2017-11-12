@@ -9,11 +9,11 @@ branches:
 branches:
   only:
     - master
-    - develop
     - travis
 
 go:
   - 1.8
+  - 1.9
   - tip
 
 matrix:
