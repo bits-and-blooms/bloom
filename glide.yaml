@@ -1,0 +1,8 @@
+package: github.com/m3db/bloom
+import: []
+testImport:
+- package: github.com/stretchr/testify
+  version: 6fe211e493929a8aac0469b93f28b1d0688a9a3a
+  subpackages:
+  - assert
+  - require

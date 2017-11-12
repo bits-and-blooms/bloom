@@ -1,0 +1,23 @@
+hash: 47580f63cd287ddc441046654c6cfb9f8ee3ae5ee1213646e73bc1ca17ded952
+updated: 2017-11-12T17:25:25.663662528-05:00
+imports:
+- name: github.com/m3db/bitset
+  version: 07973db6b78acb62ac207d0538055e874b49d90d
+- name: github.com/m3db/stackmurmur3
+  version: 744c0229c12ed0e4f8cb9d081a2692b3300bf705
+- name: github.com/spaolacci/murmur3
+  version: 0d12bf811670bf6a1a63828dfbd003eded177fce
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: 6fe211e493929a8aac0469b93f28b1d0688a9a3a
+  subpackages:
+  - assert
+  - require
