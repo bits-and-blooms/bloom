@@ -140,6 +140,19 @@ func (f *BloomFilter) K() uint {
 	return f.k
 }
 
+// B returns the values for the bitSet used the by Bloom Filter
+func (f *BloomFilter) B() bitset.BitSet {
+	return *f.b
+}
+
+// ApproxCount computes the approximate number of items in the Bloom Filter
+func (f *BloomFilter) ApproxCount() uint {
+	m := float64(f.m)
+	ratio := m / float64(f.k)
+	ln := math.Log(1 - float64(f.b.Count())/m)
+	return uint(-1 * int(ratio*ln))
+}
+
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) Add(data []byte) *BloomFilter {
 	h := baseHashes(data)
