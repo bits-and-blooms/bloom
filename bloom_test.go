@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"math"
+	"strconv"
 	"testing"
 )
 
@@ -267,6 +268,27 @@ func TestK(t *testing.T) {
 	}
 }
 
+func TestCount(t *testing.T) {
+	f := New(1000, 4)
+	f.Add([]byte("this"))
+	f.Add([]byte("that"))
+	if f.ApproxCount() != 2 {
+		t.Errorf("approximate count not accurate: %d", f.ApproxCount())
+	}
+	f.Add([]byte("the other"))
+	f.Add([]byte("another"))
+	f.Add([]byte("that"))
+	if f.ApproxCount() != 4 {
+		t.Errorf("approximate count not accurate: %d", f.ApproxCount())
+	}
+	for i := 0; i < 900; i++ {
+		f.Add([]byte(strconv.Itoa(i)))
+	}
+	if f.ApproxCount() < 900 || f.ApproxCount() > 940 {
+		t.Errorf("approximate count not accurate: %d", f.ApproxCount())
+	}
+}
+
 func TestMarshalUnmarshalJSON(t *testing.T) {
 	f := New(1000, 4)
 	data, err := json.Marshal(f)
@@ -452,6 +474,15 @@ func BenchmarkCombinedTestAndAdd(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		binary.BigEndian.PutUint32(key, uint32(i))
 		f.TestAndAdd(key)
+	}
+}
+
+func BenchmarkApproxCount(b *testing.B) {
+	f := New(100000, 35)
+	for i := 0; i < 10000; i++ {
+		f.AddString(strconv.Itoa(i))
+		b.ResetTimer()
+		f.ApproxCount()
 	}
 }
 
