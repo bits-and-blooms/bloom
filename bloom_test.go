@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"math/rand"
 	"runtime"
 	"sync"
 	"testing"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+var endianness = binary.LittleEndian
 
 // TestConcurrent must be run with -race to detect failures
 func TestConcurrent(t *testing.T) {
@@ -273,4 +276,52 @@ func TestLocation(t *testing.T) {
 		t.Error("random assignment is too unrandom")
 	}
 
+}
+
+func BenchmarkAddX10kX5(b *testing.B) {
+	var buff [8]byte
+	slice := buff[:]
+
+	b.StopTimer()
+	bf := NewBloomFilter(10000, 5)
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		endianness.PutUint64(slice, uint64(rand.Uint32()))
+		bf.Add(slice)
+	}
+}
+
+func BenchmarkContains1kX10kX5(b *testing.B) {
+	var buff [8]byte
+	slice := buff[:]
+
+	b.StopTimer()
+	bf := NewBloomFilter(10000, 5)
+	for i := 0; i < 1000; i++ {
+		endianness.PutUint64(slice, uint64(rand.Uint32()))
+		bf.Add(slice)
+	}
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		endianness.PutUint64(slice, uint64(rand.Uint32()))
+		bf.Test(slice)
+	}
+}
+
+func BenchmarkContains100kX10BX20(b *testing.B) {
+	var buff [8]byte
+	slice := buff[:]
+
+	b.StopTimer()
+	bf := NewBloomFilter(10*1000*1000*1000, 20)
+	for i := 0; i < 100*1000; i++ {
+		endianness.PutUint64(slice, uint64(rand.Uint32()))
+		bf.Add(slice)
+	}
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		endianness.PutUint64(slice, uint64(rand.Uint32()))
+		bf.Test(slice)
+	}
 }
