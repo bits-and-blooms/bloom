@@ -90,7 +90,6 @@ test:
 	GOPATH=$(GOPATH) \
 	go test \
 	-covermode=atomic \
-	-bench=. \
 	-race \
 	-cpuprofile=target/report/cpu.out \
 	-memprofile=target/report/mem.out \
