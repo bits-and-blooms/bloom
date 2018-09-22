@@ -29,6 +29,21 @@ Similarly, to test if `"Love"` is in bloom:
 
 Godoc documentation: https://godoc.org/github.com/m3db/bloom
 
+## Performance
+
+- macOS 10.13.6
+- go version go1.10 darwin/amd64
+
+```
+$ GOMAXPROCS=1 go test github.com/m3db/bloom -bench=.
+goos: darwin
+goarch: amd64
+pkg: github.com/m3db/bloom
+BenchmarkAddX10kX5              10000000               174 ns/op
+BenchmarkContains1kX10kX5       10000000               139 ns/op
+BenchmarkContains100kX10BX20     5000000               271 ns/op
+```
+
 ## Installation
 
 ```bash
