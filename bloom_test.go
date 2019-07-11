@@ -454,6 +454,19 @@ func BenchmarkCombinedTestAndAdd(b *testing.B) {
 		f.TestAndAdd(key)
 	}
 }
+func BenchmarkParallelTest(b *testing.B) {
+        key := make([]byte, 100)
+        for j := 0; j < b.N; j++ {
+                binary.BigEndian.PutUint32(key, uint32(j))
+        }
+        f := NewWithEstimates(uint(b.N), 0.0001)
+        b.ResetTimer()
+        b.RunParallel(func(pb *testing.PB) {
+                for pb.Next() {
+                        f.Test(key)
+                }
+        })
+}
 
 func TestMerge(t *testing.T) {
 	f := New(1000, 4)
