@@ -199,7 +199,7 @@ func chiTestBloom(m, k, rounds uint, elements [][]byte) (succeeds bool) {
 	chi := make([]float64, m)
 
 	for _, data := range elements {
-		h := baseHashes(data)
+		h := f.baseHashes(data)
 		for i := uint(0); i < f.k; i++ {
 			results[f.location(h, i)]++
 		}

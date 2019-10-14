@@ -67,6 +67,8 @@ type BloomFilter struct {
 	m uint
 	k uint
 	b *bitset.BitSet
+	h murmur3.Hash128
+	a [1]byte
 }
 
 func max(x, y uint) uint {
@@ -79,25 +81,36 @@ func max(x, y uint) uint {
 // New creates a new Bloom filter with _m_ bits and _k_ hashing functions
 // We force _m_ and _k_ to be at least one to avoid panics.
 func New(m uint, k uint) *BloomFilter {
-	return &BloomFilter{max(1, m), max(1, k), bitset.New(m)}
+	return &BloomFilter{
+		m: max(1, m),
+		k: max(1, k),
+		b: bitset.New(m),
+	}
 }
 
 // From creates a new Bloom filter with len(_data_) * 64 bits and _k_ hashing
 // functions. The data slice is not going to be reset.
 func From(data []uint64, k uint) *BloomFilter {
 	m := uint(len(data) * 64)
-	return &BloomFilter{m, k, bitset.From(data)}
+	return &BloomFilter{
+		m: m,
+		k: k,
+		b: bitset.From(data),
+	}
 }
 
 // baseHashes returns the four hash values of data that are used to create k
 // hashes
-func baseHashes(data []byte) [4]uint64 {
-	a1 := []byte{1} // to grab another bit of data
-	hasher := murmur3.New128()
-	hasher.Write(data) // #nosec
-	v1, v2 := hasher.Sum128()
-	hasher.Write(a1) // #nosec
-	v3, v4 := hasher.Sum128()
+func (f *BloomFilter) baseHashes(data []byte) [4]uint64 {
+	if f.h == nil {
+		f.h = murmur3.New128()
+		f.a = [1]byte{1}
+	}
+	f.h.Reset()
+	f.h.Write(data) // #nosec
+	v1, v2 := f.h.Sum128()
+	f.h.Write(f.a[:]) // #nosec
+	v3, v4 := f.h.Sum128()
 	return [4]uint64{
 		v1, v2, v3, v4,
 	}
@@ -142,7 +155,7 @@ func (f *BloomFilter) K() uint {
 
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) Add(data []byte) *BloomFilter {
-	h := baseHashes(data)
+	h := f.baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
 		f.b.Set(f.location(h, i))
 	}
@@ -180,7 +193,7 @@ func (f *BloomFilter) AddString(data string) *BloomFilter {
 // If true, the result might be a false positive. If false, the data
 // is definitely not in the set.
 func (f *BloomFilter) Test(data []byte) bool {
-	h := baseHashes(data)
+	h := f.baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
 		if !f.b.Test(f.location(h, i)) {
 			return false
@@ -211,7 +224,7 @@ func (f *BloomFilter) TestLocations(locs []uint64) bool {
 // Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	present := true
-	h := baseHashes(data)
+	h := f.baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
 		l := f.location(h, i)
 		if !f.b.Test(l) {
@@ -353,7 +366,8 @@ func Locations(data []byte, k uint) []uint64 {
 	locs := make([]uint64, k)
 
 	// calculate locations
-	h := baseHashes(data)
+	f := BloomFilter{}
+	h := f.baseHashes(data)
 	for i := uint(0); i < k; i++ {
 		locs[i] = location(h, i)
 	}
