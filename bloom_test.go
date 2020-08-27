@@ -10,8 +10,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/spaolacci/murmur3"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,7 +42,7 @@ func TestConcurrent(t *testing.T) {
 		for i := 0; i < try; i++ {
 			n1b := ro.Test(n1)
 			if !n1b {
-				err1 = fmt.Errorf("%v should be in", n1)
+				err1 = fmt.Errorf("%v should be in", string(n1))
 				break
 			}
 		}
@@ -56,7 +54,7 @@ func TestConcurrent(t *testing.T) {
 		for i := 0; i < try; i++ {
 			n2b := ro.Test(n2)
 			if !n2b {
-				err2 = fmt.Errorf("%v should be in", n2)
+				err2 = fmt.Errorf("%v should be in", string(n2))
 				break
 			}
 		}
@@ -66,10 +64,10 @@ func TestConcurrent(t *testing.T) {
 	wg.Wait()
 
 	if err1 != nil {
-		t.Fatal(err1)
+		t.Error(err1)
 	}
 	if err2 != nil {
-		t.Fatal(err2)
+		t.Error(err2)
 	}
 }
 
@@ -221,10 +219,8 @@ func chiTestBloom(m, k, rounds uint, elements [][]byte) (succeeds bool) {
 	results := make([]uint, m)
 	chi := make([]float64, m)
 
-	hash := murmur3.New128()
 	for _, data := range elements {
-		hash.Reset()
-		h := bloomFilterHashes(hash, data)
+		h := concurrentBloomFilterHashes(data)
 		for i := uint64(0); i < f.k; i++ {
 			results[bloomFilterLocation(h, i, f.m)]++
 		}

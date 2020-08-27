@@ -1,5 +1,7 @@
 package: github.com/m3db/bloom
-import: []
+import:
+- package: github.com/twmb/murmur3
+  version: ^1.1.4
 testImport:
 - package: github.com/stretchr/testify
   version: 6fe211e493929a8aac0469b93f28b1d0688a9a3a

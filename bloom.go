@@ -33,43 +33,17 @@ Similarly, to test if "Love" is in bloom:
 package bloom
 
 import (
-	"hash"
 	"math"
 
 	"github.com/m3db/bitset"
-	stackmurmur3 "github.com/m3db/stackmurmur3"
-
-	"github.com/spaolacci/murmur3"
+	"github.com/twmb/murmur3"
 )
-
-// Hash128 the golang stdlib does not have a Hash128 definition.
-type Hash128 interface {
-	hash.Hash
-	Sum128() (uint64, uint64)
-}
 
 var entropy = []byte{1}[:]
 
-func bloomFilterHashes(hash Hash128, data []byte) [4]uint64 {
-	hash.Reset()
-	hash.Write(data)
-	h1, h2 := hash.Sum128()
-	hash.Write(entropy) // Add entropy
-	h3, h4 := hash.Sum128()
-	return [4]uint64{h1, h2, h3, h4}
-}
-
-// concurrentBloomFilterHashes provides the same hashes as bloomFilterHashes
-// but allows the caller to not have to provide a resuseable hash, this is
-// useful in highly concurrrent call paths that would otherwise have to take
-// a ref to a hash from a shared pool (involving a write lock or channel) or
-// allocate a new hash per operation (expensive for the GC).
 func concurrentBloomFilterHashes(data []byte) [4]uint64 {
-	var hash stackmurmur3.Digest128
-	hash = hash.Write(data)
-	h1, h2 := hash.Sum128()
-	hash = hash.Write(entropy) // Add entropy
-	h3, h4 := hash.Sum128()
+	h1, h2 := murmur3.Sum128(data)
+	h3, h4 := murmur3.Sum128(entropy) // Add entropy
 	return [4]uint64{h1, h2, h3, h4}
 }
 
@@ -84,10 +58,9 @@ func bloomFilterLocation(h [4]uint64, i, m uint64) uint {
 // desired. This is due to a cached hash digest being used to avoid
 // allocation each read/write.
 type BloomFilter struct {
-	m    uint64
-	k    uint64
-	set  *bitset.BitSet
-	hash Hash128
+	m   uint64
+	k   uint64
+	set *bitset.BitSet
 }
 
 // NewBloomFilter creates a new bloom filter that can represent
@@ -100,14 +73,13 @@ func NewBloomFilter(m uint, k uint) *BloomFilter {
 		k = 1
 	}
 	return &BloomFilter{
-		m:    uint64(m),
-		k:    uint64(k),
-		set:  bitset.NewBitSet(m),
-		hash: murmur3.New128(),
+		m:   uint64(m),
+		k:   uint64(k),
+		set: bitset.NewBitSet(m),
 	}
 }
 
-// BloomFilterEstimate estimates m and k, based on:
+// EstimateFalsePositiveRate estimates m and k, based on:
 // https://stackoverflow.com/a/22467497
 func EstimateFalsePositiveRate(n uint, p float64) (m uint, k uint) {
 	floatM := (float64(-1) * float64(n) * math.Log(p)) / (math.Pow(math.Log(2), 2))
@@ -118,7 +90,7 @@ func EstimateFalsePositiveRate(n uint, p float64) (m uint, k uint) {
 
 // Add value to the set.
 func (b *BloomFilter) Add(value []byte) {
-	h := bloomFilterHashes(b.hash, value)
+	h := concurrentBloomFilterHashes(value)
 	for i := uint64(0); i < b.k; i++ {
 		b.set.Set(bloomFilterLocation(h, i, b.m))
 	}
@@ -126,7 +98,7 @@ func (b *BloomFilter) Add(value []byte) {
 
 // Test if value is in the set.
 func (b *BloomFilter) Test(value []byte) bool {
-	h := bloomFilterHashes(b.hash, value)
+	h := concurrentBloomFilterHashes(value)
 	for i := uint64(0); i < b.k; i++ {
 		if !b.set.Test(bloomFilterLocation(h, i, b.m)) {
 			return false
@@ -156,10 +128,9 @@ func (b *BloomFilter) BitSet() *bitset.BitSet {
 // desired. This is due to a cached hash digest being used to avoid
 // allocation each read/write.
 type ReadOnlyBloomFilter struct {
-	m    uint64
-	k    uint64
-	set  *bitset.ReadOnlyBitSet
-	hash Hash128
+	m   uint64
+	k   uint64
+	set *bitset.ReadOnlyBitSet
 }
 
 // NewReadOnlyBloomFilter returns a new read only bloom filter backed
@@ -167,16 +138,15 @@ type ReadOnlyBloomFilter struct {
 // It is not concurrent read or write safe.
 func NewReadOnlyBloomFilter(m, k uint, data []byte) *ReadOnlyBloomFilter {
 	return &ReadOnlyBloomFilter{
-		m:    uint64(m),
-		k:    uint64(k),
-		set:  bitset.NewReadOnlyBitSet(data),
-		hash: murmur3.New128(),
+		m:   uint64(m),
+		k:   uint64(k),
+		set: bitset.NewReadOnlyBitSet(data),
 	}
 }
 
 // Test if value is in the set.
 func (b *ReadOnlyBloomFilter) Test(value []byte) bool {
-	h := bloomFilterHashes(b.hash, value)
+	h := concurrentBloomFilterHashes(value)
 	for i := uint64(0); i < b.k; i++ {
 		if !b.set.Test(bloomFilterLocation(h, i, b.m)) {
 			return false

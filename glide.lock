@@ -1,5 +1,5 @@
-hash: 47580f63cd287ddc441046654c6cfb9f8ee3ae5ee1213646e73bc1ca17ded952
-updated: 2017-11-12T17:25:25.663662528-05:00
+hash: 92e25ff1ff7d4e7802b22bbef0dda7a873d90ef3823bef0e0ba859364cd63a88
+updated: 2020-08-27T14:37:28.119756-04:00
 imports:
 - name: github.com/m3db/bitset
   version: 07973db6b78acb62ac207d0538055e874b49d90d
@@ -7,6 +7,8 @@ imports:
   version: 744c0229c12ed0e4f8cb9d081a2692b3300bf705
 - name: github.com/spaolacci/murmur3
   version: 0d12bf811670bf6a1a63828dfbd003eded177fce
+- name: github.com/twmb/murmur3
+  version: a57a9e6e8d2a5858df4163dd85863a6a9d9c5474
 testImports:
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
