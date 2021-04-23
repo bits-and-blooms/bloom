@@ -89,15 +89,25 @@ func From(data []uint64, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.From(data)}
 }
 
+var murmur3Pool = sync.Pool{
+	New: func() interface{} {
+		return murmur3.New128()
+	},
+}
+
+// to grab another bit of data
+var a1 = []byte{1}
+
 // baseHashes returns the four hash values of data that are used to create k
 // hashes
 func baseHashes(data []byte) [4]uint64 {
-	a1 := []byte{1} // to grab another bit of data
-	hasher := murmur3.New128()
+	hasher := murmur3Pool.Get().(murmur3.Hash128)
 	hasher.Write(data) // #nosec
 	v1, v2 := hasher.Sum128()
 	hasher.Write(a1) // #nosec
 	v3, v4 := hasher.Sum128()
+	hasher.Reset()
+	murmur3Pool.Put(hasher)
 	return [4]uint64{
 		v1, v2, v3, v4,
 	}
