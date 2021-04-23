@@ -3,7 +3,8 @@ The bloom library relied on the excellent murmur library
 by Sébastien Paolacci. Unfortunately, it involved some heap
 allocation. We want to avoid any heap allocation whatsoever
 in the hashing process. To preserve backward compatibility, we roll
-our own version.
+our own hashing functions. They are designed to be strictly equivalent
+to Paolacci's implementation.
 
 License on original code:
 
@@ -54,6 +55,7 @@ type digest128 struct {
 	h2 uint64 // Unfinalized running hash part 2.
 }
 
+//bmix will hash blocks (16 bytes)
 func (d *digest128) bmix(p []byte) {
 	nblocks := len(p) / block_size
 	for i := 0; i < nblocks; i++ {
@@ -63,6 +65,7 @@ func (d *digest128) bmix(p []byte) {
 	}
 }
 
+//bmix_words will hash two 64-bit words (16 bytes)
 func (d *digest128) bmix_words(k1, k2 uint64) {
 	h1, h2 := d.h1, d.h2
 
@@ -86,6 +89,13 @@ func (d *digest128) bmix_words(k1, k2 uint64) {
 	d.h1, d.h2 = h1, h2
 }
 
+// sum128 computers two 64-bit hash value. It is assumed that
+// bmix was first called on the data to process complete blocks
+// of 16 bytes. The 'tail' is a slice representing the 'tail' (leftover
+// elements, fewer than 16). If pad_tail is true, we make it seem like
+// there is an extra element with value 1 appended to the tail.
+// The length parameter represents the full length of the data (including
+// the blocks of 16 bytes, and, if pad_tail is true, an extra byte).
 func (d *digest128) sum128(pad_tail bool, length uint, tail []byte) (h1, h2 uint64) {
 	h1, h2 = d.h1, d.h2
 
@@ -232,6 +242,17 @@ func fmix64(k uint64) uint64 {
 	return k
 }
 
+// sum256 will compute 4 64-bit hash values from the input.
+// It is designed to never allocate memory on the heap. So it
+// works without any byte buffer whatsoever.
+// It is designed to be strictly equivalent to
+// 			a1 := []byte{1}
+//          hasher := murmur3.New128()
+//          hasher.Write(data) // #nosec
+//          v1, v2 := hasher.Sum128()
+//          hasher.Write(a1) // #nosec
+//          v3, v4 := hasher.Sum128()
+// See TestHashRandom.
 func (d *digest128) sum256(data []byte) (hash1, hash2, hash3, hash4 uint64) {
 	// We always start from zero.
 	d.h1, d.h2 = 0, 0
@@ -239,24 +260,28 @@ func (d *digest128) sum256(data []byte) (hash1, hash2, hash3, hash4 uint64) {
 	d.bmix(data)
 	// We have enough to compute the first two 64-bit numbers
 	length := uint(len(data))
-
 	tail_length := length % block_size
-
 	tail := data[length-tail_length:]
 	hash1, hash2 = d.sum128(false, length, tail)
 	// Next we want to 'virtually' append 1 to the input, but,
 	// we do not want to append to an actual array!!!
 	if tail_length+1 == block_size {
 		// We are left with no tail!!!
-		// We assume little endian encoding
+		// Note that murmur3 is sensitive to endianess and so are we.
+		// We assume a little endian system. Go effectively never run
+		// on big endian systems so this is fine.
 		word1 := *(*uint64)(unsafe.Pointer(&tail[0]))
 		word2 := uint64(*(*uint32)(unsafe.Pointer(&tail[8])))
 		word2 = word2 | (uint64(tail[12]) << 32) | (uint64(tail[13]) << 40) | (uint64(tail[14]) << 48)
+		// We append 1.
 		word2 = word2 | (uint64(1) << 56)
+		// We process the resulting 2 words.
 		d.bmix_words(word1, word2)
-		tail := data[length:] // empty slice
+		tail := data[length:] // empty slice, deliberate.
 		hash3, hash4 = d.sum128(false, length+1, tail)
 	} else {
+		// We still have a tail (fewer than 15 bytes) but we
+		// need to append '1' to it.
 		hash3, hash4 = d.sum128(true, length+1, tail)
 	}
 

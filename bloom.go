@@ -56,7 +56,6 @@ import (
 	"io"
 	"math"
 
-	"github.com/spaolacci/murmur3"
 	"github.com/willf/bitset"
 )
 
@@ -92,14 +91,10 @@ func From(data []uint64, k uint) *BloomFilter {
 // baseHashes returns the four hash values of data that are used to create k
 // hashes
 func baseHashes(data []byte) [4]uint64 {
-	a1 := []byte{1} // to grab another bit of data
-	hasher := murmur3.New128()
-	hasher.Write(data) // #nosec
-	v1, v2 := hasher.Sum128()
-	hasher.Write(a1) // #nosec
-	v3, v4 := hasher.Sum128()
+	var d digest128;
+	hash1, hash2, hash3, hash4 := d.sum256(data)
 	return [4]uint64{
-		v1, v2, v3, v4,
+		hash1, hash2, hash3, hash4,
 	}
 }
 
