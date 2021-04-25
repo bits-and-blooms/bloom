@@ -91,7 +91,7 @@ func From(data []uint64, k uint) *BloomFilter {
 // baseHashes returns the four hash values of data that are used to create k
 // hashes
 func baseHashes(data []byte) [4]uint64 {
-	var d digest128;
+	var d digest128 // murmur hashing
 	hash1, hash2, hash3, hash4 := d.sum256(data)
 	return [4]uint64{
 		hash1, hash2, hash3, hash4,
