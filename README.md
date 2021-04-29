@@ -3,7 +3,7 @@ Bloom filters
 [![Test](https://github.com/bits-and-blooms/bloom/workflows/Test/badge.svg)](https://github.com/bits-and-blooms/bloom/actions?query=workflow%3ATest)
 [![Coverage Status](https://coveralls.io/repos/github/willf/bloom/badge.svg?branch=master)](https://coveralls.io/github/willf/bloom?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/willf/bloom)](https://goreportcard.com/report/github.com/willf/bloom)
-[![GoDoc](https://godoc.org/github.com/willf/bloom?status.svg)](http://godoc.org/github.com/willf/bloom)
+[![GoDoc](https://godoc.org/github.com/bits-and-blooms/bloom?status.svg)](http://godoc.org/github.com/bits-and-blooms/bloom)
 
 A Bloom filter is a representation of a set of _n_ items, where the main
 requirement is to make membership queries; _i.e._, whether an item is a
@@ -41,7 +41,7 @@ that estimating the FP rate will clear the Bloom filter.
 
 Discussion here: [Bloom filter](https://groups.google.com/d/topic/golang-nuts/6MktecKi1bE/discussion)
 
-Godoc documentation: https://godoc.org/github.com/willf/bloom
+Godoc documentation: https://godoc.org/github.com/bits-and-blooms/bloom
 
 ## Installation
 

@@ -56,7 +56,7 @@ import (
 	"io"
 	"math"
 
-	"github.com/willf/bitset"
+	"github.com/bits-and-blooms/bitset"
 )
 
 // A BloomFilter is a representation of a set of _n_ items, where the main
