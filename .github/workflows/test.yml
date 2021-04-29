@@ -16,5 +16,7 @@ jobs:
       uses: actions/checkout@master
     - name: Get
       run: go get -d ./...
+    - name: Get murmur
+      run: go get github.com/spaolacci/murmur3
     - name: Test
       run: go test ./...
