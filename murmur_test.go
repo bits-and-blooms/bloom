@@ -30,6 +30,13 @@ func TestHashBasic(t *testing.T) {
 	}
 }
 
+func TestDocumentation(t *testing.T) {
+    filter := NewWithEstimates(1000, 0.01)
+	if filter.EstimateFalsePositiveRate(1000) > 0.0101 {
+		t.Errorf("Bad false positive rate")
+	}
+}
+
 // We want to preserve backward compatibility
 func TestHashRandom(t *testing.T) {
 	max_length := 1000

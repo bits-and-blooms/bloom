@@ -5,20 +5,31 @@ Bloom filters
 [![Go Report Card](https://goreportcard.com/badge/github.com/willf/bloom)](https://goreportcard.com/report/github.com/willf/bloom)
 [![GoDoc](https://godoc.org/github.com/bits-and-blooms/bloom?status.svg)](http://godoc.org/github.com/bits-and-blooms/bloom)
 
-A Bloom filter is a representation of a set of _n_ items, where the main
+A Bloom filter is a concise/compressed representation of a set, where the main
 requirement is to make membership queries; _i.e._, whether an item is a
-member of a set.
+member of a set. A Bloom filter will always correctly report the presence
+of an element in the set when the element is indeed present. A Bloom filter 
+can use much less storage than the original set, but it allows for some 'false positives':
+it may sometimes report that an element is in the set whereas it is not.
 
-A Bloom filter has two parameters: _m_, a maximum size (typically a reasonably large multiple of the cardinality of the set to represent) and _k_, the number of hashing functions on elements of the set. (The actual hashing functions are important, too, but this is not a parameter for this implementation). A Bloom filter is backed by a [BitSet](https://github.com/bits-and-blooms/bitset); a key is represented in the filter by setting the bits at each value of the  hashing functions (modulo _m_). Set membership is done by _testing_ whether the bits at each value of the hashing functions (again, modulo _m_) are set. If so, the item is in the set. If the item is actually in the set, a Bloom filter will never fail (the true positive rate is 1.0); but it is susceptible to false positives. The art is to choose _k_ and _m_ correctly.
+When you construct, you need to know how many elements you have (the desired capacity), and what is the desired false positive rate you are willing to tolerate. A common false-positive rate is 1%. The
+lower the false-positive rate, the more memory you are going to require. Similarly, the higher the
+capacity, the more memory you will use.
+You may construct the Bloom filter capable of receiving 1 million elements with a false-positive
+rate of 1% in the following manner. 
 
-In this implementation, the hashing functions used is [murmurhash](github.com/spaolacci/murmur3), a non-cryptographic hashing function.
+```Go
+    filter := bloom.NewWithEstimates(1000000, 0.01) 
+```
 
-This implementation accepts keys for setting and testing as `[]byte`. Thus, to
+You should call `NewWithEstimates` conservatively: if you specify a number of elements that it is
+too small, the false-positive bound might be exceeded. A Bloom filter is not a dynamic data structure:
+you must know ahead of time what your desired capacity is.
+
+Our implementation accepts keys for setting and testing as `[]byte`. Thus, to
 add a string item, `"Love"`:
 
 ```Go
-    n := uint(1000)
-    filter := bloom.New(20*n, 5) // load of 20, 5 keys
     filter.Add([]byte("Love"))
 ```
 
@@ -36,16 +47,6 @@ For numerical data, we recommend that you look into the encoding/binary library.
     binary.BigEndian.PutUint32(n1, i)
     filter.Add(n1)
 ```
-
-Finally, there is a method to estimate the false positive rate of a particular
-bloom filter for a set of size _n_:
-
-```Go
-    if filter.EstimateFalsePositiveRate(1000) > 0.001
-```
-
-Given the particular hashing scheme, it's best to be empirical about this. Note
-that estimating the FP rate will clear the Bloom filter.
 
 Discussion here: [Bloom filter](https://groups.google.com/d/topic/golang-nuts/6MktecKi1bE/discussion)
 
@@ -74,3 +75,13 @@ Before committing the code, please check if it passes all tests using (note: thi
 make deps
 make qa
 ```
+
+## Design
+
+A Bloom filter has two parameters: _m_, the number of bits used in storage, and _k_, the number of hashing functions on elements of the set. (The actual hashing functions are important, too, but this is not a parameter for this implementation). A Bloom filter is backed by a [BitSet](https://github.com/willf/bitset); a key is represented in the filter by setting the bits at each value of the  hashing functions (modulo _m_). Set membership is done by _testing_ whether the bits at each value of the hashing functions (again, modulo _m_) are set. If so, the item is in the set. If the item is actually in the set, a Bloom filter will never fail (the true positive rate is 1.0); but it is susceptible to false positives. The art is to choose _k_ and _m_ correctly.
+
+In this implementation, the hashing functions used is [murmurhash](github.com/spaolacci/murmur3), a non-cryptographic hashing function.
+
+
+Given the particular hashing scheme, it's best to be empirical about this. Note
+that estimating the FP rate will clear the Bloom filter.
