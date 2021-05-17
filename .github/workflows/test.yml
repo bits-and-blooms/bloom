@@ -4,7 +4,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: ['1.13', '1.14']
+        go-version: [1.14.x, 1.15.x, 1.16.x]
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -13,10 +13,25 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
-      uses: actions/checkout@master
-    - name: Get
-      run: go get -d ./...
-    - name: Get murmur
-      run: go get github.com/spaolacci/murmur3
+      uses: actions/checkout@v2
+    - name: Vet
+      run: go vet ./...
     - name: Test
       run: go test ./...
+
+  single-ver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.x
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: fmt
+        run: diff <(gofmt -s -d .) <(printf "")
+
+      - name: Test 386
+        run: GOOS=linux GOARCH=386 go test ./...

@@ -1,9 +1,8 @@
 Bloom filters
 -------------
-[![Test](https://github.com/bits-and-blooms/bloom/workflows/Test/badge.svg)](https://github.com/bits-and-blooms/bloom/actions?query=workflow%3ATest)
-[![Coverage Status](https://coveralls.io/repos/github/willf/bloom/badge.svg?branch=master)](https://coveralls.io/github/willf/bloom?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/willf/bloom)](https://goreportcard.com/report/github.com/willf/bloom)
-[![GoDoc](https://godoc.org/github.com/bits-and-blooms/bloom?status.svg)](http://godoc.org/github.com/bits-and-blooms/bloom)
+[![Test](https://github.com/bits-and-blooms/bloom/actions/workflows/test.yml/badge.svg)](https://github.com/bits-and-blooms/bloom/actions/workflows/test.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/bits-and-blooms/bloom)](https://goreportcard.com/report/github.com/bits-and-blooms/bloom)
+[![Go Reference](https://pkg.go.dev/badge/github.com/bits-and-blooms/bloom.svg)](https://pkg.go.dev/github.com/bits-and-blooms/bloom)
 
 A Bloom filter is a concise/compressed representation of a set, where the main
 requirement is to make membership queries; _i.e._, whether an item is a
@@ -50,12 +49,12 @@ For numerical data, we recommend that you look into the encoding/binary library.
 
 Discussion here: [Bloom filter](https://groups.google.com/d/topic/golang-nuts/6MktecKi1bE/discussion)
 
-Godoc documentation: https://godoc.org/github.com/bits-and-blooms/bloom
+Godoc documentation: https://pkg.go.dev/github.com/bits-and-blooms/bloom
 
 ## Installation
 
 ```bash
-go get -u github.com/bits-and-blooms/bloom
+go get -u github.com/bits-and-blooms/bloom/v3
 ```
 
 ## Contributing
