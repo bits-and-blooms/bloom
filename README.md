@@ -61,7 +61,7 @@ go get -u github.com/bits-and-blooms/bloom/v3
 
 If you wish to contribute to this project, please branch and issue a pull request against master ("[GitHub Flow](https://guides.github.com/introduction/flow/)")
 
-This project include a Makefile that allows you to test and build the project with simple commands.
+This project includes a Makefile that allows you to test and build the project with simple commands.
 To see all available options:
 ```bash
 make help
@@ -77,9 +77,9 @@ make qa
 
 ## Design
 
-A Bloom filter has two parameters: _m_, the number of bits used in storage, and _k_, the number of hashing functions on elements of the set. (The actual hashing functions are important, too, but this is not a parameter for this implementation). A Bloom filter is backed by a [BitSet](https://github.com/willf/bitset); a key is represented in the filter by setting the bits at each value of the  hashing functions (modulo _m_). Set membership is done by _testing_ whether the bits at each value of the hashing functions (again, modulo _m_) are set. If so, the item is in the set. If the item is actually in the set, a Bloom filter will never fail (the true positive rate is 1.0); but it is susceptible to false positives. The art is to choose _k_ and _m_ correctly.
+A Bloom filter has two parameters: _m_, the number of bits used in storage, and _k_, the number of hashing functions on elements of the set. (The actual hashing functions are important, too, but this is not a parameter for this implementation). A Bloom filter is backed by a [BitSet](https://github.com/bits-and-blooms/bitset); a key is represented in the filter by setting the bits at each value of the  hashing functions (modulo _m_). Set membership is done by _testing_ whether the bits at each value of the hashing functions (again, modulo _m_) are set. If so, the item is in the set. If the item is actually in the set, a Bloom filter will never fail (the true positive rate is 1.0); but it is susceptible to false positives. The art is to choose _k_ and _m_ correctly.
 
-In this implementation, the hashing functions used is [murmurhash](github.com/spaolacci/murmur3), a non-cryptographic hashing function.
+In this implementation, the hashing functions used is [murmurhash](https://github.com/spaolacci/murmur3), a non-cryptographic hashing function.
 
 
 Given the particular hashing scheme, it's best to be empirical about this. Note
