@@ -135,6 +135,11 @@ func (f *BloomFilter) K() uint {
 	return f.k
 }
 
+// BitSet returns the underlying bit set for this filter.
+func (f *BloomFilter) BitSet() *bitset.BitSet {
+	return f.b
+}
+
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) Add(data []byte) *BloomFilter {
 	h := baseHashes(data)
