@@ -85,6 +85,12 @@ func New(m uint, k uint) *BloomFilter {
 // functions. The data slice is not going to be reset.
 func From(data []uint64, k uint) *BloomFilter {
 	m := uint(len(data) * 64)
+	return FromWithM(data, m, k)
+}
+
+// FromWithM creates a new Bloom filter with _m_ length, _k_ hashing functions.
+// The data slice is not going to be reset.
+func FromWithM(data []uint64, m, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.From(data)}
 }
 
