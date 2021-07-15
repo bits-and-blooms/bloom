@@ -135,13 +135,12 @@ func (f *BloomFilter) K() uint {
 	return f.k
 }
 
-// Add data to the Bloom Filter. Returns the filter (allows chaining)
-func (f *BloomFilter) Add(data []byte) *BloomFilter {
+// Add data to the Bloom Filter.
+func (f *BloomFilter) Add(data []byte) {
 	h := baseHashes(data)
 	for i := uint(0); i < f.k; i++ {
 		f.b.Set(f.location(h, i))
 	}
-	return f
 }
 
 // Merge the data from two Bloom Filters.
@@ -166,9 +165,9 @@ func (f *BloomFilter) Copy() *BloomFilter {
 	return fc
 }
 
-// AddString to the Bloom Filter. Returns the filter (allows chaining)
-func (f *BloomFilter) AddString(data string) *BloomFilter {
-	return f.Add([]byte(data))
+// AddString to the Bloom Filter.
+func (f *BloomFilter) AddString(data string) {
+	f.Add([]byte(data))
 }
 
 // Test returns true if the data is in the BloomFilter, false otherwise.
