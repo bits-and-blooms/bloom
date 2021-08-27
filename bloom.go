@@ -217,7 +217,7 @@ func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	return present
 }
 
-// TestOrAdd is the equivalent to calling Test(data) then if not exists Add(data).
+// TestOrAdd is the equivalent to calling Test(data) then if not present Add(data).
 // Returns the result of Test.
 func (f *BloomFilter) TestOrAdd(data []byte) bool {
 	present := true
