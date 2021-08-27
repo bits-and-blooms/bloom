@@ -217,6 +217,21 @@ func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	return present
 }
 
+// TestOrAdd is the equivalent to calling Test(data) then if not exists Add(data).
+// Returns the result of Test.
+func (f *BloomFilter) TestOrAdd(data []byte) bool {
+	present := true
+	h := baseHashes(data)
+	for i := uint(0); i < f.k; i++ {
+		l := f.location(h, i)
+		if !f.b.Test(l) {
+			present = false
+			f.b.Set(l)
+		}
+	}
+	return present
+}
+
 // TestAndAddString is the equivalent to calling Test(string) then Add(string).
 // Returns the result of Test.
 func (f *BloomFilter) TestAndAddString(data string) bool {
