@@ -1,9 +1,10 @@
 package bloom
 
 import (
-	"github.com/spaolacci/murmur3"
 	"math/rand"
 	"testing"
+
+	"github.com/spaolacci/murmur3"
 )
 
 // We want to preserve backward compatibility
@@ -31,9 +32,10 @@ func TestHashBasic(t *testing.T) {
 }
 
 func TestDocumentation(t *testing.T) {
-    filter := NewWithEstimates(1000, 0.01)
-	if filter.EstimateFalsePositiveRate(1000) > 0.0101 {
-		t.Errorf("Bad false positive rate")
+	filter := NewWithEstimates(10000, 0.01)
+	got := filter.EstimateFalsePositiveRate(10000)
+	if got > 0.011 || got < 0.009 {
+		t.Errorf("Bad false positive rate %v", got)
 	}
 }
 
