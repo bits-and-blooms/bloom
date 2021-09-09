@@ -595,3 +595,25 @@ func TestTestLocations(t *testing.T) {
 		t.Errorf("%v should be in.", n4)
 	}
 }
+
+
+func TestFPP(t *testing.T) {
+	f := NewWithEstimates(1000, 0.001)
+	for i := uint32(0); i < 1000; i++ {
+		n := make([]byte, 4)
+		binary.BigEndian.PutUint32(n, i)
+		f.Add(n)
+	}
+	count := 0
+
+	for  i := uint32(0); i < 1000; i++ {
+		n := make([]byte, 4)
+		binary.BigEndian.PutUint32(n, i + 1000)
+		if f.Test(n) {
+			count += 1
+		}
+	}
+	if float64(count)/1000.0 > 0.001 {
+		t.Errorf("Excessive fpp")
+	}
+}
