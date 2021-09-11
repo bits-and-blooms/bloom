@@ -217,6 +217,12 @@ func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	return present
 }
 
+// TestAndAddString is the equivalent to calling Test(string) then Add(string).
+// Returns the result of Test.
+func (f *BloomFilter) TestAndAddString(data string) bool {
+	return f.TestAndAdd([]byte(data))
+}
+
 // TestOrAdd is the equivalent to calling Test(data) then if not present Add(data).
 // Returns the result of Test.
 func (f *BloomFilter) TestOrAdd(data []byte) bool {
@@ -232,10 +238,10 @@ func (f *BloomFilter) TestOrAdd(data []byte) bool {
 	return present
 }
 
-// TestAndAddString is the equivalent to calling Test(string) then Add(string).
+// TestOrAddString is the equivalent to calling Test(string) then if not present Add(string).
 // Returns the result of Test.
-func (f *BloomFilter) TestAndAddString(data string) bool {
-	return f.TestAndAdd([]byte(data))
+func (f *BloomFilter) TestOrAddString(data string) bool {
+	return f.TestOrAdd([]byte(data))
 }
 
 // ClearAll clears all the data in a Bloom filter, removing all keys
