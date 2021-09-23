@@ -614,4 +614,3 @@ func TestTestLocations(t *testing.T) {
 		t.Errorf("%v should be in.", n4)
 	}
 }
-
