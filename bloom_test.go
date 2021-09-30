@@ -596,6 +596,17 @@ func TestTestLocations(t *testing.T) {
 	}
 }
 
+func TestApproximatedSize(t *testing.T) {
+	f := NewWithEstimates(1000, 0.001)
+	f.Add([]byte("Love"))
+	f.Add([]byte("is"))
+	f.Add([]byte("in"))
+	f.Add([]byte("bloom"))
+	size := f.ApproximatedSize()
+	if size != 4 {
+		t.Errorf("%d should equal 4.", size)
+	}
+}
 
 func TestFPP(t *testing.T) {
 	f := NewWithEstimates(1000, 0.001)
