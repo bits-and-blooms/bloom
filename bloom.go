@@ -282,7 +282,7 @@ func (f *BloomFilter) ApproximatedSize() uint32 {
 	x := float64(f.b.Count())
 	m := float64(f.Cap())
 	k := float64(f.K())
-	size := -1 * m/k * math.Log(1-x/m) / math.Log(math.E)
+	size := -1 * m / k * math.Log(1-x/m) / math.Log(math.E)
 	return uint32(math.Floor(size + 0.5)) // round
 }
 

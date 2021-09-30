@@ -636,9 +636,9 @@ func TestFPP(t *testing.T) {
 	}
 	count := 0
 
-	for  i := uint32(0); i < 1000; i++ {
+	for i := uint32(0); i < 1000; i++ {
 		n := make([]byte, 4)
-		binary.BigEndian.PutUint32(n, i + 1000)
+		binary.BigEndian.PutUint32(n, i+1000)
 		if f.Test(n) {
 			count += 1
 		}
