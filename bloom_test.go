@@ -91,15 +91,19 @@ func TestBasicUint32(t *testing.T) {
 	n2 := make([]byte, 4)
 	n3 := make([]byte, 4)
 	n4 := make([]byte, 4)
+	n5 := make([]byte, 4)
 	binary.BigEndian.PutUint32(n1, 100)
 	binary.BigEndian.PutUint32(n2, 101)
 	binary.BigEndian.PutUint32(n3, 102)
 	binary.BigEndian.PutUint32(n4, 103)
+	binary.BigEndian.PutUint32(n5, 104)
 	f.Add(n1)
 	n3a := f.TestAndAdd(n3)
 	n1b := f.Test(n1)
 	n2b := f.Test(n2)
 	n3b := f.Test(n3)
+	n5a := f.TestOrAdd(n5)
+	n5b := f.Test(n5)
 	f.Test(n4)
 	if !n1b {
 		t.Errorf("%v should be in.", n1)
@@ -112,6 +116,12 @@ func TestBasicUint32(t *testing.T) {
 	}
 	if !n3b {
 		t.Errorf("%v should be in the second time we look.", n3)
+	}
+	if n5a {
+		t.Errorf("%v should not be in the first time we look.", n5)
+	}
+	if !n5b {
+		t.Errorf("%v should be in the second time we look.", n5)
 	}
 }
 
@@ -131,11 +141,14 @@ func TestString(t *testing.T) {
 	n2 := "is"
 	n3 := "in"
 	n4 := "bloom"
+	n5 := "blooms"
 	f.AddString(n1)
 	n3a := f.TestAndAddString(n3)
 	n1b := f.TestString(n1)
 	n2b := f.TestString(n2)
 	n3b := f.TestString(n3)
+	n5a := f.TestOrAddString(n5)
+	n5b := f.TestString(n5)
 	f.TestString(n4)
 	if !n1b {
 		t.Errorf("%v should be in.", n1)
@@ -148,6 +161,12 @@ func TestString(t *testing.T) {
 	}
 	if !n3b {
 		t.Errorf("%v should be in the second time we look.", n3)
+	}
+	if n5a {
+		t.Errorf("%v should not be in the first time we look.", n5)
+	}
+	if !n5b {
+		t.Errorf("%v should be in the second time we look.", n5)
 	}
 
 }

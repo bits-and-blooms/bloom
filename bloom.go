@@ -223,6 +223,27 @@ func (f *BloomFilter) TestAndAddString(data string) bool {
 	return f.TestAndAdd([]byte(data))
 }
 
+// TestOrAdd is the equivalent to calling Test(data) then if not present Add(data).
+// Returns the result of Test.
+func (f *BloomFilter) TestOrAdd(data []byte) bool {
+	present := true
+	h := baseHashes(data)
+	for i := uint(0); i < f.k; i++ {
+		l := f.location(h, i)
+		if !f.b.Test(l) {
+			present = false
+			f.b.Set(l)
+		}
+	}
+	return present
+}
+
+// TestOrAddString is the equivalent to calling Test(string) then if not present Add(string).
+// Returns the result of Test.
+func (f *BloomFilter) TestOrAddString(data string) bool {
+	return f.TestOrAdd([]byte(data))
+}
+
 // ClearAll clears all the data in a Bloom filter, removing all keys
 func (f *BloomFilter) ClearAll() *BloomFilter {
 	f.b.ClearAll()
