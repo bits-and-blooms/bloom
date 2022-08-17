@@ -264,26 +264,26 @@ func (f *BloomFilter) ClearAll() *BloomFilter {
 // EstimateFalsePositiveRate returns, for a BloomFilter with a estimate of m bits
 // and k hash functions, what the false positive rate will be
 // while storing n entries; runs 100,000 tests. This is an empirical
-// test using integers as keys. As a side-effect, it clears the BloomFilter.
+// test using integers as keys.
 func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fpRate float64) {
 	rounds := uint32(100000)
-	f.ClearAll()
+	c := f.Copy()
+	c.ClearAll()
 	n1 := make([]byte, 4)
 	for i := uint32(0); i < uint32(n); i++ {
 		binary.BigEndian.PutUint32(n1, i)
-		f.Add(n1)
+		c.Add(n1)
 	}
 	fp := 0
 	// test for number of rounds
 	for i := uint32(0); i < rounds; i++ {
 		binary.BigEndian.PutUint32(n1, i+uint32(n)+1)
-		if f.Test(n1) {
+		if c.Test(n1) {
 			//fmt.Printf("%v failed.\n", i+uint32(n)+1)
 			fp++
 		}
 	}
 	fpRate = float64(fp) / (float64(rounds))
-	f.ClearAll()
 	return
 }
 
