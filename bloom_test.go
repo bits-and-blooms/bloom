@@ -154,8 +154,7 @@ func TestString(t *testing.T) {
 
 func testEstimated(n uint, maxFp float64, t *testing.T) {
 	m, k := EstimateParameters(n, maxFp)
-	f := NewWithEstimates(n, maxFp)
-	fpRate := f.EstimateFalsePositiveRate(n)
+	fpRate := EstimateFalsePositiveRate(m, k, n)
 	if fpRate > 1.5*maxFp {
 		t.Errorf("False positive rate too high: n: %v; m: %v; k: %v; maxFp: %f; fpRate: %f, fpRate/maxFp: %f", n, m, k, maxFp, fpRate, fpRate/maxFp)
 	}
@@ -429,7 +428,7 @@ func BenchmarkEstimated(b *testing.B) {
 	for n := uint(100000); n <= 100000; n *= 10 {
 		for fp := 0.1; fp >= 0.0001; fp /= 10.0 {
 			f := NewWithEstimates(n, fp)
-			f.EstimateFalsePositiveRate(n)
+			EstimateFalsePositiveRate(f.m, f.k, n)
 		}
 	}
 }
