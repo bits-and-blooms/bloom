@@ -281,7 +281,7 @@ func (f *BloomFilter) ClearAll() *BloomFilter {
 func EstimateFalsePositiveRate(m, k, n uint) (fpRate float64) {
 	rounds := uint32(100000)
 	// We construct a new filter.
-	f := New(m,k)
+	f := New(m, k)
 	n1 := make([]byte, 4)
 	// We populate the filter with n values.
 	for i := uint32(0); i < uint32(n); i++ {
