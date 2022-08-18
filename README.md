@@ -85,8 +85,6 @@ You would expect `ActualfpRate` to be close to the desired false-positive rate `
 The `EstimateFalsePositiveRate` function creates a temporary Bloom filter. It is
 also relatively expensive and only meant for validation.
 
-Discussion here: [Bloom filter](https://groups.google.com/d/topic/golang-nuts/6MktecKi1bE/discussion)
-
 
 ## Contributing
 
