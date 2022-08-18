@@ -96,6 +96,12 @@ func New(m uint, k uint) *BloomFilter {
 // functions. The data slice is not going to be reset.
 func From(data []uint64, k uint) *BloomFilter {
 	m := uint(len(data) * 64)
+	return FromWithM(data, m, k)
+}
+
+// FromWithM creates a new Bloom filter with _m_ length, _k_ hashing functions.
+// The data slice is not going to be reset.
+func FromWithM(data []uint64, m, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.From(data)}
 }
 
@@ -144,6 +150,11 @@ func (f *BloomFilter) Cap() uint {
 // K returns the number of hash functions used in the BloomFilter
 func (f *BloomFilter) K() uint {
 	return f.k
+}
+
+// BitSet returns the underlying bitset for this filter.
+func (f *BloomFilter) BitSet() *bitset.BitSet {
+	return f.b
 }
 
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
@@ -234,6 +245,27 @@ func (f *BloomFilter) TestAndAddString(data string) bool {
 	return f.TestAndAdd([]byte(data))
 }
 
+// TestOrAdd is the equivalent to calling Test(data) then if not present Add(data).
+// Returns the result of Test.
+func (f *BloomFilter) TestOrAdd(data []byte) bool {
+	present := true
+	h := baseHashes(data)
+	for i := uint(0); i < f.k; i++ {
+		l := f.location(h, i)
+		if !f.b.Test(l) {
+			present = false
+			f.b.Set(l)
+		}
+	}
+	return present
+}
+
+// TestOrAddString is the equivalent to calling Test(string) then if not present Add(string).
+// Returns the result of Test.
+func (f *BloomFilter) TestOrAddString(data string) bool {
+	return f.TestOrAdd([]byte(data))
+}
+
 // ClearAll clears all the data in a Bloom filter, removing all keys
 func (f *BloomFilter) ClearAll() *BloomFilter {
 	f.b.ClearAll()
@@ -265,6 +297,16 @@ func EstimateFalsePositiveRate(m, k, n uint) (fpRate float64) {
 	}
 	fpRate = float64(fp) / (float64(rounds))
 	return
+}
+
+// Approximating the number of items
+// https://en.wikipedia.org/wiki/Bloom_filter#Approximating_the_number_of_items_in_a_Bloom_filter
+func (f *BloomFilter) ApproximatedSize() uint32 {
+	x := float64(f.b.Count())
+	m := float64(f.Cap())
+	k := float64(f.K())
+	size := -1 * m / k * math.Log(1-x/m) / math.Log(math.E)
+	return uint32(math.Floor(size + 0.5)) // round
 }
 
 // bloomFilterJSON is an unexported type for marshaling/unmarshaling BloomFilter struct.
