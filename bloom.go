@@ -45,8 +45,15 @@ Bloom filter with _m_ bits and _k_ hashing functions for a set of size _n_:
 
 You can use it to validate the computed m, k parameters:
 
-    m, k := EstimateParameters(n, maxFp)
+    m, k := EstimateParameters(n, fp)
     ActualfpRate := EstimateFalsePositiveRate(m, k, n)
+
+or
+
+	f := NewWithEstimates(n, fp)
+	ActualfpRate := EstimateFalsePositiveRate(f.m, f.k, n)
+
+You would expect ActualfpRate to be close to the desired fp in these cases.
 
 The EstimateFalsePositiveRate function creates a temporary Bloom filter.
 */

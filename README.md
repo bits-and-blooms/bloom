@@ -31,13 +31,22 @@ For numeric data, I recommend that you look into the encoding/binary library. Bu
     binary.BigEndian.PutUint32(n1, i)
     filter.Add(n1)
 
-Finally, there is a method to estimate the false positive rate of a particular
-bloom filter for a set of size _n_:
+Finally, there is a method to estimate the false positive rate of a
+Bloom filter with _m_ bits and _k_ hashing functions for a set of size _n_:
 
-    if filter.EstimateFalsePositiveRate(1000) > 0.001
+    if bloom.EstimateFalsePositiveRate(20*n, 5, n) > 0.001 ...
 
-Given the particular hashing scheme, it's best to be empirical about this. Note
-that estimating the FP rate will clear the Bloom filter.
+You can use it to validate the computed m, k parameters:
+
+    m, k := EstimateParameters(n, fp)
+    ActualfpRate := EstimateFalsePositiveRate(m, k, n)
+
+or
+
+	f := NewWithEstimates(n, fp)
+	ActualfpRate := EstimateFalsePositiveRate(f.m, f.k, n)
+
+You would expect ActualfpRate to be close to the desired fp in these cases.
 
 Discussion here: [Bloom filter](https://groups.google.com/d/topic/golang-nuts/6MktecKi1bE/discussion)
 
