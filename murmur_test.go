@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/spaolacci/murmur3"
+	"github.com/twmb/murmur3"
 )
 
 // We want to preserve backward compatibility
