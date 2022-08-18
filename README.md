@@ -72,6 +72,9 @@ or
 
 You would expect `ActualfpRate` to be close to the desired false-positive rate `fp` in these cases.
 
+The `EstimateFalsePositiveRate` function creates a temporary Bloom filter. It is
+also relatively expensive and only meant for validation.
+
 Discussion here: [Bloom filter](https://groups.google.com/d/topic/golang-nuts/6MktecKi1bE/discussion)
 
 Godoc documentation: https://pkg.go.dev/github.com/bits-and-blooms/bloom
