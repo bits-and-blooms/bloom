@@ -38,13 +38,25 @@ for example, to add a uint32 to the filter:
     binary.BigEndian.PutUint32(n1,i)
     f.Add(n1)
 
-Finally, there is a method to estimate the false positive rate of a particular
-Bloom filter for a set of size _n_:
+Finally, there is a method to estimate the false positive rate of a
+Bloom filter with _m_ bits and _k_ hashing functions for a set of size _n_:
 
-    if filter.EstimateFalsePositiveRate(1000) > 0.001
+    if bloom.EstimateFalsePositiveRate(20*n, 5, n) > 0.001 ...
 
-Given the particular hashing scheme, it's best to be empirical about this. Note
-that estimating the FP rate will clear the Bloom filter.
+You can use it to validate the computed m, k parameters:
+
+    m, k := bloom.EstimateParameters(n, fp)
+    ActualfpRate := bloom.EstimateFalsePositiveRate(m, k, n)
+
+or
+
+	f := bloom.NewWithEstimates(n, fp)
+	ActualfpRate := bloom.EstimateFalsePositiveRate(f.m, f.k, n)
+
+You would expect ActualfpRate to be close to the desired fp in these cases.
+
+The EstimateFalsePositiveRate function creates a temporary Bloom filter. It is
+also relatively expensive and only meant for validation.
 */
 package bloom
 
@@ -261,14 +273,17 @@ func (f *BloomFilter) ClearAll() *BloomFilter {
 	return f
 }
 
-// EstimateFalsePositiveRate returns, for a BloomFilter with a estimate of m bits
-// and k hash functions, what the false positive rate will be
-// while storing n entries; runs 100,000 tests. This is an empirical
-// test using integers as keys. As a side-effect, it clears the BloomFilter.
-func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fpRate float64) {
+// EstimateFalsePositiveRate returns, for a BloomFilter of m bits
+// and k hash functions, an estimation of the false positive rate when
+//  storing n entries. This is an empirical, relatively slow
+// test using integers as keys.
+// This function is useful to validate the implementation.
+func EstimateFalsePositiveRate(m, k, n uint) (fpRate float64) {
 	rounds := uint32(100000)
-	f.ClearAll()
+	// We construct a new filter.
+	f := New(m, k)
 	n1 := make([]byte, 4)
+	// We populate the filter with n values.
 	for i := uint32(0); i < uint32(n); i++ {
 		binary.BigEndian.PutUint32(n1, i)
 		f.Add(n1)
@@ -278,12 +293,10 @@ func (f *BloomFilter) EstimateFalsePositiveRate(n uint) (fpRate float64) {
 	for i := uint32(0); i < rounds; i++ {
 		binary.BigEndian.PutUint32(n1, i+uint32(n)+1)
 		if f.Test(n1) {
-			//fmt.Printf("%v failed.\n", i+uint32(n)+1)
 			fp++
 		}
 	}
 	fpRate = float64(fp) / (float64(rounds))
-	f.ClearAll()
 	return
 }
 

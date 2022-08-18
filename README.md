@@ -47,6 +47,34 @@ For numerical data, we recommend that you look into the encoding/binary library.
     filter.Add(n1)
 ```
 
+
+Sometimes, the actual false positive rate may differ (slightly) from the
+theoretical false positive rate. We have a function to estimate the false positive rate of a
+Bloom filter with _m_ bits and _k_ hashing functions for a set of size _n_:
+
+```Go
+    if bloom.EstimateFalsePositiveRate(20*n, 5, n) > 0.001 ...
+```
+
+You can use it to validate the computed m, k parameters:
+
+```Go
+    m, k := bloom.EstimateParameters(n, fp)
+    ActualfpRate := bloom.EstimateFalsePositiveRate(m, k, n)
+```
+
+or
+
+```Go
+	f := bloom.NewWithEstimates(n, fp)
+	ActualfpRate := bloom.EstimateFalsePositiveRate(f.m, f.k, n)
+```
+
+You would expect `ActualfpRate` to be close to the desired false-positive rate `fp` in these cases.
+
+The `EstimateFalsePositiveRate` function creates a temporary Bloom filter. It is
+also relatively expensive and only meant for validation.
+
 Discussion here: [Bloom filter](https://groups.google.com/d/topic/golang-nuts/6MktecKi1bE/discussion)
 
 Godoc documentation: https://pkg.go.dev/github.com/bits-and-blooms/bloom
