@@ -4,5 +4,5 @@ go 1.14
 
 require (
 	github.com/bits-and-blooms/bitset v1.2.0
-	github.com/spaolacci/murmur3 v1.1.0
+	github.com/twmb/murmur3 v1.1.6
 )
