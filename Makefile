@@ -185,7 +185,7 @@ deps:
 	GOPATH=$(GOPATH) go get github.com/opennota/check/cmd/varcheck
 	GOPATH=$(GOPATH) go get github.com/kisielk/errcheck
 	GOPATH=$(GOPATH) go get honnef.co/go/tools/cmd/gosimple
-	GOPATH=$(GOPATH) go get github.com/GoASTScanner/gas
+	GOPATH=$(GOPATH) go get github.com/securego/gosec
 
 # Remove any build artifact
 clean:
