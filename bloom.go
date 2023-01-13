@@ -229,6 +229,10 @@ func (f *BloomFilter) TestLocations(locs []uint64) bool {
 // The filter is written to unconditionnally: even if the element is present,
 // the corresponding bits are still set. See also TestOrAdd.
 // Returns the result of Test.
+//
+// Deprecated: TestOrAdd should be used instead of TestAndAdd. In a
+// future release, we will remove TestAndAdd.
+//
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	present := true
 	h := baseHashes(data)
@@ -246,6 +250,10 @@ func (f *BloomFilter) TestAndAdd(data []byte) bool {
 // The filter is written to unconditionnally: even if the string is present,
 // the corresponding bits are still set. See also TestOrAdd.
 // Returns the result of Test.
+//
+// Deprecated: TestOrAddString should be used instead of TestAndAddString. In a
+// future release, we will remove TestAndAddString.
+//
 func (f *BloomFilter) TestAndAddString(data string) bool {
 	return f.TestAndAdd([]byte(data))
 }
