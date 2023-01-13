@@ -225,7 +225,9 @@ func (f *BloomFilter) TestLocations(locs []uint64) bool {
 	return true
 }
 
-// TestAndAdd is the equivalent to calling Test(data) then Add(data).
+// TestAndAdd is equivalent to calling Test(data) then Add(data).
+// The filter is written to unconditionnally: even if the element is present,
+// the corresponding bits are still set. See also TestOrAdd.
 // Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	present := true
@@ -241,12 +243,15 @@ func (f *BloomFilter) TestAndAdd(data []byte) bool {
 }
 
 // TestAndAddString is the equivalent to calling Test(string) then Add(string).
+// The filter is written to unconditionnally: even if the string is present,
+// the corresponding bits are still set. See also TestOrAdd.
 // Returns the result of Test.
 func (f *BloomFilter) TestAndAddString(data string) bool {
 	return f.TestAndAdd([]byte(data))
 }
 
-// TestOrAdd is the equivalent to calling Test(data) then if not present Add(data).
+// TestOrAdd is equivalent to calling Test(data) then if not present Add(data).
+// If the element is already in the filter, then the filter is unchanged.
 // Returns the result of Test.
 func (f *BloomFilter) TestOrAdd(data []byte) bool {
 	present := true
@@ -262,6 +267,7 @@ func (f *BloomFilter) TestOrAdd(data []byte) bool {
 }
 
 // TestOrAddString is the equivalent to calling Test(string) then if not present Add(string).
+// If the string is already in the filter, then the filter is unchanged.
 // Returns the result of Test.
 func (f *BloomFilter) TestOrAddString(data string) bool {
 	return f.TestOrAdd([]byte(data))
