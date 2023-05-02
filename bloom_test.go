@@ -646,3 +646,41 @@ func TestFPP(t *testing.T) {
 		t.Errorf("Excessive fpp")
 	}
 }
+
+func TestEncodeDecodeBinary(t *testing.T) {
+	f := New(1000, 4)
+	f.Add([]byte("one"))
+	f.Add([]byte("two"))
+	f.Add([]byte("three"))
+	data, err := f.MarshalBinary()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	var g BloomFilter
+	err = g.UnmarshalBinary(data)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if g.m != f.m {
+		t.Error("invalid m value")
+	}
+	if g.k != f.k {
+		t.Error("invalid k value")
+	}
+	if g.b == nil {
+		t.Fatal("bitset is nil")
+	}
+	if !g.b.Equal(f.b) {
+		t.Error("bitsets are not equal")
+	}
+	if !g.Test([]byte("three")) {
+		t.Errorf("missing value 'three'")
+	}
+	if !g.Test([]byte("two")) {
+		t.Errorf("missing value 'two'")
+	}
+	if !g.Test([]byte("one")) {
+		t.Errorf("missing value 'one'")
+	}
+}

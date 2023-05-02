@@ -399,6 +399,25 @@ func (f *BloomFilter) GobDecode(data []byte) error {
 	return err
 }
 
+// MarshalBinary implements binary.BinaryMarshaler interface.
+func (f *BloomFilter) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+	_, err := f.WriteTo(&buf)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary implements binary.BinaryUnmarshaler interface.
+func (f *BloomFilter) UnmarshalBinary(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	_, err := f.ReadFrom(buf)
+
+	return err
+}
+
 // Equal tests for the equality of two Bloom filters
 func (f *BloomFilter) Equal(g *BloomFilter) bool {
 	return f.m == g.m && f.k == g.k && f.b.Equal(g.b)
