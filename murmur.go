@@ -55,7 +55,7 @@ type digest128 struct {
 	h2 uint64 // Unfinalized running hash part 2.
 }
 
-//bmix will hash blocks (16 bytes)
+// bmix will hash blocks (16 bytes)
 func (d *digest128) bmix(p []byte) {
 	nblocks := len(p) / block_size
 	for i := 0; i < nblocks; i++ {
@@ -65,7 +65,7 @@ func (d *digest128) bmix(p []byte) {
 	}
 }
 
-//bmix_words will hash two 64-bit words (16 bytes)
+// bmix_words will hash two 64-bit words (16 bytes)
 func (d *digest128) bmix_words(k1, k2 uint64) {
 	h1, h2 := d.h1, d.h2
 
@@ -246,12 +246,14 @@ func fmix64(k uint64) uint64 {
 // It is designed to never allocate memory on the heap. So it
 // works without any byte buffer whatsoever.
 // It is designed to be strictly equivalent to
-// 			a1 := []byte{1}
-//          hasher := murmur3.New128()
-//          hasher.Write(data) // #nosec
-//          v1, v2 := hasher.Sum128()
-//          hasher.Write(a1) // #nosec
-//          v3, v4 := hasher.Sum128()
+//
+//				a1 := []byte{1}
+//	         hasher := murmur3.New128()
+//	         hasher.Write(data) // #nosec
+//	         v1, v2 := hasher.Sum128()
+//	         hasher.Write(a1) // #nosec
+//	         v3, v4 := hasher.Sum128()
+//
 // See TestHashRandom.
 func (d *digest128) sum256(data []byte) (hash1, hash2, hash3, hash4 uint64) {
 	// We always start from zero.

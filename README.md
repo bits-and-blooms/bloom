@@ -85,6 +85,41 @@ You would expect `ActualfpRate` to be close to the desired false-positive rate `
 The `EstimateFalsePositiveRate` function creates a temporary Bloom filter. It is
 also relatively expensive and only meant for validation.
 
+## Serialization
+
+You can read and write the Bloom filters as follows:
+
+
+```Go
+	f := New(1000, 4)
+	var buf bytes.Buffer
+	bytesWritten, err := f.WriteTo(&buf)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	var g BloomFilter
+	bytesRead, err := g.ReadFrom(&buf)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if bytesRead != bytesWritten {
+		t.Errorf("read unexpected number of bytes %d != %d", bytesRead, bytesWritten)
+	}
+```
+
+*Performance tip*: 
+When reading and writing to a file or a network connection, you may get better performance by 
+wrapping your streams with `bufio` instances.
+
+E.g., 
+```Go
+	f, err := os.Create("myfile")
+	w := bufio.NewWriter(f)
+```
+```Go
+	f, err := os.Open("myfile")
+	r := bufio.NewReader(f)
+```
 
 ## Contributing
 

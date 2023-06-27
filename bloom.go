@@ -22,31 +22,31 @@ a non-cryptographic hashing function.
 This implementation accepts keys for setting as testing as []byte. Thus, to
 add a string item, "Love":
 
-    uint n = 1000
-    filter := bloom.New(20*n, 5) // load of 20, 5 keys
-    filter.Add([]byte("Love"))
+	uint n = 1000
+	filter := bloom.New(20*n, 5) // load of 20, 5 keys
+	filter.Add([]byte("Love"))
 
 Similarly, to test if "Love" is in bloom:
 
-    if filter.Test([]byte("Love"))
+	if filter.Test([]byte("Love"))
 
 For numeric data, I recommend that you look into the binary/encoding library. But,
 for example, to add a uint32 to the filter:
 
-    i := uint32(100)
-    n1 := make([]byte,4)
-    binary.BigEndian.PutUint32(n1,i)
-    f.Add(n1)
+	i := uint32(100)
+	n1 := make([]byte,4)
+	binary.BigEndian.PutUint32(n1,i)
+	f.Add(n1)
 
 Finally, there is a method to estimate the false positive rate of a
 Bloom filter with _m_ bits and _k_ hashing functions for a set of size _n_:
 
-    if bloom.EstimateFalsePositiveRate(20*n, 5, n) > 0.001 ...
+	if bloom.EstimateFalsePositiveRate(20*n, 5, n) > 0.001 ...
 
 You can use it to validate the computed m, k parameters:
 
-    m, k := bloom.EstimateParameters(n, fp)
-    ActualfpRate := bloom.EstimateFalsePositiveRate(m, k, n)
+	m, k := bloom.EstimateParameters(n, fp)
+	ActualfpRate := bloom.EstimateFalsePositiveRate(m, k, n)
 
 or
 
@@ -281,7 +281,9 @@ func (f *BloomFilter) ClearAll() *BloomFilter {
 
 // EstimateFalsePositiveRate returns, for a BloomFilter of m bits
 // and k hash functions, an estimation of the false positive rate when
-//  storing n entries. This is an empirical, relatively slow
+//
+//	storing n entries. This is an empirical, relatively slow
+//
 // test using integers as keys.
 // This function is useful to validate the implementation.
 func EstimateFalsePositiveRate(m, k, n uint) (fpRate float64) {
@@ -343,6 +345,13 @@ func (f *BloomFilter) UnmarshalJSON(data []byte) error {
 
 // WriteTo writes a binary representation of the BloomFilter to an i/o stream.
 // It returns the number of bytes written.
+//
+// Performance: if this function is used to write to a disk or network
+// connection, it might be beneficial to wrap the stream in a bufio.Writer.
+// E.g.,
+//
+//	      f, err := os.Create("myfile")
+//		       w := bufio.NewWriter(f)
 func (f *BloomFilter) WriteTo(stream io.Writer) (int64, error) {
 	err := binary.Write(stream, binary.BigEndian, uint64(f.m))
 	if err != nil {
@@ -359,6 +368,13 @@ func (f *BloomFilter) WriteTo(stream io.Writer) (int64, error) {
 // ReadFrom reads a binary representation of the BloomFilter (such as might
 // have been written by WriteTo()) from an i/o stream. It returns the number
 // of bytes read.
+//
+// Performance: if this function is used to read from a disk or network
+// connection, it might be beneficial to wrap the stream in a bufio.Reader.
+// E.g.,
+//
+//	f, err := os.Open("myfile")
+//	r := bufio.NewReader(f)
 func (f *BloomFilter) ReadFrom(stream io.Reader) (int64, error) {
 	var m, k uint64
 	err := binary.Read(stream, binary.BigEndian, &m)
