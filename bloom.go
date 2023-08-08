@@ -191,7 +191,7 @@ func (f *BloomFilter) Copy() *BloomFilter {
 
 // AddString to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) AddString(data string) *BloomFilter {
-	return f.Add([]byte(data))
+	return f.Add(unsafeStringToBytes(data))
 }
 
 // Test returns true if the data is in the BloomFilter, false otherwise.
@@ -211,7 +211,7 @@ func (f *BloomFilter) Test(data []byte) bool {
 // If true, the result might be a false positive. If false, the data
 // is definitely not in the set.
 func (f *BloomFilter) TestString(data string) bool {
-	return f.Test([]byte(data))
+	return f.Test(unsafeStringToBytes(data))
 }
 
 // TestLocations returns true if all locations are set in the BloomFilter, false
@@ -247,7 +247,7 @@ func (f *BloomFilter) TestAndAdd(data []byte) bool {
 // the corresponding bits are still set. See also TestOrAdd.
 // Returns the result of Test.
 func (f *BloomFilter) TestAndAddString(data string) bool {
-	return f.TestAndAdd([]byte(data))
+	return f.TestAndAdd(unsafeStringToBytes(data))
 }
 
 // TestOrAdd is equivalent to calling Test(data) then if not present Add(data).
@@ -270,7 +270,7 @@ func (f *BloomFilter) TestOrAdd(data []byte) bool {
 // If the string is already in the filter, then the filter is unchanged.
 // Returns the result of Test.
 func (f *BloomFilter) TestOrAddString(data string) bool {
-	return f.TestOrAdd([]byte(data))
+	return f.TestOrAdd(unsafeStringToBytes(data))
 }
 
 // ClearAll clears all the data in a Bloom filter, removing all keys

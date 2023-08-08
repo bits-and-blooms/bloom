@@ -473,6 +473,27 @@ func BenchmarkCombinedTestAndAdd(b *testing.B) {
 	}
 }
 
+func BenchmarkSeparateTestAndAddString(b *testing.B) {
+	f := NewWithEstimates(uint(b.N), 0.0001)
+	key := make([]byte, 100)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		binary.BigEndian.PutUint32(key, uint32(i))
+		f.TestString(unsafeBytesToString(key))
+		f.AddString(unsafeBytesToString(key))
+	}
+}
+
+func BenchmarkCombinedTestAndAddString(b *testing.B) {
+	f := NewWithEstimates(uint(b.N), 0.0001)
+	key := make([]byte, 100)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		binary.BigEndian.PutUint32(key, uint32(i))
+		f.TestAndAddString(unsafeBytesToString(key))
+	}
+}
+
 func TestMerge(t *testing.T) {
 	f := New(1000, 4)
 	n1 := []byte("f")
