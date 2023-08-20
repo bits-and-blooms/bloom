@@ -2,6 +2,7 @@ package bloom
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/gob"
 	"encoding/json"
@@ -71,6 +72,35 @@ func TestBasic(t *testing.T) {
 	n1b := f.Test(n1)
 	n2b := f.Test(n2)
 	n3b := f.Test(n3)
+	if !n1b {
+		t.Errorf("%v should be in.", n1)
+	}
+	if n2b {
+		t.Errorf("%v should not be in.", n2)
+	}
+	if n3a {
+		t.Errorf("%v should not be in the first time we look.", n3)
+	}
+	if !n3b {
+		t.Errorf("%v should be in the second time we look.", n3)
+	}
+}
+
+func TestWithSumBasic(t *testing.T) {
+	f := New(1000, 4)
+	n1 := []byte("Bess")
+	n2 := []byte("Jane")
+	n3 := []byte("Emma")
+	f.Add(n1)
+	n3a := f.TestAndAdd(n3)
+
+	n1sum := sha256.Sum256(n1)
+	n2sum := sha256.Sum256(n2)
+	n3sum := sha256.Sum256(n3)
+
+	n1b := f.TestWithSum(n1sum[:])
+	n2b := f.TestWithSum(n2sum[:])
+	n3b := f.TestWithSum(n3sum[:])
 	if !n1b {
 		t.Errorf("%v should be in.", n1)
 	}
@@ -217,7 +247,7 @@ func chiTestBloom(m, k, rounds uint, elements [][]byte) (succeeds bool) {
 	chi := make([]float64, m)
 
 	for _, data := range elements {
-		h := baseHashes(data)
+		h := BaseHashes(data)
 		for i := uint(0); i < f.k; i++ {
 			results[f.location(h, i)]++
 		}
@@ -627,23 +657,24 @@ func TestApproximatedSize(t *testing.T) {
 }
 
 func TestFPP(t *testing.T) {
-	f := NewWithEstimates(1000, 0.001)
-	for i := uint32(0); i < 1000; i++ {
+	k := 100000
+	f := NewWithEstimates(uint(k), 0.001)
+	for i := uint32(0); i < uint32(k); i++ {
 		n := make([]byte, 4)
 		binary.BigEndian.PutUint32(n, i)
 		f.Add(n)
 	}
 	count := 0
 
-	for i := uint32(0); i < 1000; i++ {
+	for i := uint32(0); i < uint32(k); i++ {
 		n := make([]byte, 4)
-		binary.BigEndian.PutUint32(n, i+1000)
+		binary.BigEndian.PutUint32(n, i+uint32(k))
 		if f.Test(n) {
 			count += 1
 		}
 	}
-	if float64(count)/1000.0 > 0.001 {
-		t.Errorf("Excessive fpp")
+	if float64(count)/float64(k) > 0.002 {
+		t.Errorf("Excessive fpp %f", float64(count)/float64(k))
 	}
 }
 

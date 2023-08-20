@@ -62,6 +62,7 @@ package bloom
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -106,14 +107,21 @@ func FromWithM(data []uint64, m, k uint) *BloomFilter {
 	return &BloomFilter{m, k, bitset.From(data)}
 }
 
-// baseHashes returns the four hash values of data that are used to create k
+// BaseHashes returns the four hash values of data that are used to create k
 // hashes
-func baseHashes(data []byte) [4]uint64 {
-	var d digest128 // murmur hashing
-	hash1, hash2, hash3, hash4 := d.sum256(data)
-	return [4]uint64{
-		hash1, hash2, hash3, hash4,
+func BaseHashes(data []byte) [4]uint64 {
+	sum := sha256.Sum256(data)
+
+	return BaseHashesFromSum(sum[0:32])
+}
+
+// BaseHashestFromSum returns the four hash uint64 values represented by the given hash digest byte array.
+func BaseHashesFromSum(sum []byte) [4]uint64 {
+	var h [4]uint64
+	for i := 0; i < 4; i++ {
+		h[i] = binary.LittleEndian.Uint64(sum[i*8 : (i+1)*8])
 	}
+	return h
 }
 
 // location returns the ith hashed location using the four base hash values
@@ -160,7 +168,7 @@ func (f *BloomFilter) BitSet() *bitset.BitSet {
 
 // Add data to the Bloom Filter. Returns the filter (allows chaining)
 func (f *BloomFilter) Add(data []byte) *BloomFilter {
-	h := baseHashes(data)
+	h := BaseHashes(data)
 	for i := uint(0); i < f.k; i++ {
 		f.b.Set(f.location(h, i))
 	}
@@ -198,7 +206,18 @@ func (f *BloomFilter) AddString(data string) *BloomFilter {
 // If true, the result might be a false positive. If false, the data
 // is definitely not in the set.
 func (f *BloomFilter) Test(data []byte) bool {
-	h := baseHashes(data)
+	h := BaseHashes(data)
+	return f.testWithHashValues(h)
+}
+
+// TestSum returns true if the data, represented by the given 256-bit hash digest byte array, is in the BloomFilter, false otherwise.
+func (f *BloomFilter) TestWithSum(sum []byte) bool {
+	h := BaseHashesFromSum(sum)
+	return f.testWithHashValues(h)
+}
+
+// testWithHashValues returns true if the data, represented by the converted hash values h, is in the BloomFilter, false otherwise.
+func (f *BloomFilter) testWithHashValues(h [4]uint64) bool {
 	for i := uint(0); i < f.k; i++ {
 		if !f.b.Test(f.location(h, i)) {
 			return false
@@ -231,7 +250,7 @@ func (f *BloomFilter) TestLocations(locs []uint64) bool {
 // Returns the result of Test.
 func (f *BloomFilter) TestAndAdd(data []byte) bool {
 	present := true
-	h := baseHashes(data)
+	h := BaseHashes(data)
 	for i := uint(0); i < f.k; i++ {
 		l := f.location(h, i)
 		if !f.b.Test(l) {
@@ -255,7 +274,7 @@ func (f *BloomFilter) TestAndAddString(data string) bool {
 // Returns the result of Test.
 func (f *BloomFilter) TestOrAdd(data []byte) bool {
 	present := true
-	h := baseHashes(data)
+	h := BaseHashes(data)
 	for i := uint(0); i < f.k; i++ {
 		l := f.location(h, i)
 		if !f.b.Test(l) {
@@ -444,7 +463,7 @@ func Locations(data []byte, k uint) []uint64 {
 	locs := make([]uint64, k)
 
 	// calculate locations
-	h := baseHashes(data)
+	h := BaseHashes(data)
 	for i := uint(0); i < k; i++ {
 		locs[i] = location(h, i)
 	}
