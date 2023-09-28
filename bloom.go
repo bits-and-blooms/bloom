@@ -326,7 +326,7 @@ type bloomFilterJSON struct {
 }
 
 // MarshalJSON implements json.Marshaler interface.
-func (f *BloomFilter) MarshalJSON() ([]byte, error) {
+func (f BloomFilter) MarshalJSON() ([]byte, error) {
 	return json.Marshal(bloomFilterJSON{f.m, f.k, f.b})
 }
 
