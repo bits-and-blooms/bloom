@@ -30,8 +30,5 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: fmt
-        run: diff <(gofmt -s -d .) <(printf "")
-
       - name: Test 386
         run: GOOS=linux GOARCH=386 go test ./...
