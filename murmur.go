@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package bloom
 
 import (
+	"encoding/binary"
 	"math/bits"
 	"unsafe"
 )
@@ -59,8 +60,8 @@ type digest128 struct {
 func (d *digest128) bmix(p []byte) {
 	nblocks := len(p) / block_size
 	for i := 0; i < nblocks; i++ {
-		t := (*[2]uint64)(unsafe.Pointer(&p[i*block_size]))
-		k1, k2 := t[0], t[1]
+		b := (*[16]byte)(unsafe.Pointer(&p[i*block_size]))
+		k1, k2 := binary.LittleEndian.Uint64(b[:8]), binary.LittleEndian.Uint64(b[8:])
 		d.bmix_words(k1, k2)
 	}
 }
@@ -269,8 +270,8 @@ func (d *digest128) sum256(data []byte) (hash1, hash2, hash3, hash4 uint64) {
 	// we do not want to append to an actual array!!!
 	if tail_length+1 == block_size {
 		// We are left with no tail!!!
-		word1 := *(*uint64)(unsafe.Pointer(&tail[0]))
-		word2 := uint64(*(*uint32)(unsafe.Pointer(&tail[8])))
+		word1 := binary.LittleEndian.Uint64(tail[:8])
+		word2 := uint64(binary.LittleEndian.Uint32(tail[8 : 8+4]))
 		word2 = word2 | (uint64(tail[12]) << 32) | (uint64(tail[13]) << 40) | (uint64(tail[14]) << 48)
 		// We append 1.
 		word2 = word2 | (uint64(1) << 56)
