@@ -314,7 +314,27 @@ func (f *BloomFilter) ApproximatedSize() uint32 {
 	x := float64(f.b.Count())
 	m := float64(f.Cap())
 	k := float64(f.K())
-	size := -1 * m / k * math.Log(1-x/m) / math.Log(math.E)
+
+	if x == 0 {
+		return 0 // If no bit is set, returns 0
+	}
+
+	ratio := x / m
+	if ratio >= 1.0 {
+		return math.MaxUint32 // If all bits are set, returns the maximum value
+	}
+
+	// To prevent floating point precision issues, ensure ratio does not exceed 1
+	if ratio > 1.0 {
+		ratio = 1.0
+	}
+
+	size := -m / k * math.Log(1-ratio)
+
+	// Check for overflow
+	if size > float64(math.MaxUint32) {
+		return math.MaxUint32
+	}
 	return uint32(math.Floor(size + 0.5)) // round
 }
 
