@@ -1,4 +1,4 @@
-github.com/bits-and-blooms/bitset v1.19.0 h1:OlSrg3SvMZwX2WKZuFV2xHWSXt/W/ibYJyUJDthDI98=
-github.com/bits-and-blooms/bitset v1.19.0/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
+github.com/bits-and-blooms/bitset v1.19.1 h1:mv2yVhy96D2CuskLPXnc58oJNMs5PCWjAZuyYU0p12M=
+github.com/bits-and-blooms/bitset v1.19.1/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
 github.com/twmb/murmur3 v1.1.6 h1:mqrRot1BRxm+Yct+vavLMou2/iJt0tNVTTC0QoIjaZg=
 github.com/twmb/murmur3 v1.1.6/go.mod h1:Qq/R7NUyOfr65zD+6Q5IHKsJLwP7exErjN6lyyq3OSQ=
