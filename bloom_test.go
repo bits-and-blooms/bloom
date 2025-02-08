@@ -1,11 +1,12 @@
 package bloom
 
 import (
-	"fmt"
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
+	"io"
 	"math"
 	"testing"
 
@@ -315,9 +316,8 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	}
 }
 
-
 func TestMarshalUnmarshalJSONValue(t *testing.T) {
-	f:= BloomFilter{1000, 4, bitset.New(1000)}
+	f := BloomFilter{1000, 4, bitset.New(1000)}
 	data, err := json.Marshal(f)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -715,4 +715,134 @@ func TestEncodeDecodeBinary(t *testing.T) {
 	if !g.Test([]byte("one")) {
 		t.Errorf("missing value 'one'")
 	}
+}
+
+func TestBitSetAndClearAll(t *testing.T) {
+	f := New(1000, 4)
+	data := []byte("test")
+
+	// Verify initial empty state
+	if f.BitSet().Count() != 0 {
+		t.Error("New filter should have empty bitset")
+	}
+
+	// Add data and verify bitset changes
+	f.Add(data)
+	bs := f.BitSet()
+	if bs.Count() == 0 {
+		t.Error("BitSet should show occupied bits after Add")
+	}
+
+	// Test ClearAll functionality
+	f.ClearAll()
+	if bs.Count() != 0 {
+		t.Error("BitSet should be empty after ClearAll")
+	}
+	if f.Test(data) {
+		t.Error("Filter should not contain cleared data")
+	}
+
+	// Verify ClearAll returns the filter for chaining
+	if f.ClearAll() != f {
+		t.Error("ClearAll should return the filter instance")
+	}
+}
+
+// Add new failing writer/reader types at top of file
+type failWriter struct {
+	failsAfter int
+	count      int
+}
+
+func (w *failWriter) Write(p []byte) (n int, err error) {
+	if w.count >= w.failsAfter {
+		return 0, fmt.Errorf("simulated write failure")
+	}
+	w.count += len(p)
+	return len(p), nil
+}
+
+type failReader struct {
+	failsAfter int
+	count      int
+}
+
+func (r *failReader) Read(p []byte) (n int, err error) {
+	if r.count >= r.failsAfter {
+		return 0, fmt.Errorf("simulated read failure")
+	}
+	// Return EOF if we're supposed to read past failure point
+	if r.count+len(p) > r.failsAfter {
+		return 0, io.EOF
+	}
+	r.count += len(p)
+	return len(p), nil
+}
+
+func TestWriteToErrorCases(t *testing.T) {
+	f := New(1000, 4)
+
+	t.Run("fails writing m", func(t *testing.T) {
+		w := &failWriter{failsAfter: 0}
+		_, err := f.WriteTo(w)
+		if err == nil || err.Error() != "simulated write failure" {
+			t.Errorf("Expected simulated write failure, got: %v", err)
+		}
+	})
+
+	t.Run("fails writing k", func(t *testing.T) {
+		// 8 bytes written for m (uint64), fails on k
+		w := &failWriter{failsAfter: 8}
+		_, err := f.WriteTo(w)
+		if err == nil || err.Error() != "simulated write failure" {
+			t.Errorf("Expected failure writing k, got: %v", err)
+		}
+	})
+
+	t.Run("fails writing bitset", func(t *testing.T) {
+		// 16 bytes written (m + k), fails during bitset write
+		w := &failWriter{failsAfter: 16}
+		_, err := f.WriteTo(w)
+		if err == nil {
+			t.Error("Expected error during bitset write, got nil")
+		}
+	})
+}
+
+func TestReadFromErrorCases(t *testing.T) {
+	validData := bytes.NewBuffer(nil)
+	f := New(1000, 4)
+	_, err := f.WriteTo(validData) // Populate with valid data
+	if err != nil {
+		t.Fatalf("Failed to prepare valid data: %v", err)
+	}
+
+	t.Run("fails reading m", func(t *testing.T) {
+		r := &failReader{failsAfter: 0}
+		g := New(1000, 4)
+		_, err := g.ReadFrom(r)
+		if err == nil || err.Error() != "simulated read failure" {
+			t.Errorf("Expected failure reading m, got: %v", err)
+		}
+	})
+
+	t.Run("fails reading k", func(t *testing.T) {
+		// Read 8 bytes (m), then fail on k
+		r := &failReader{failsAfter: 8}
+		g := New(1000, 4)
+		_, err := g.ReadFrom(r)
+		if err == nil || err.Error() != "simulated read failure" {
+			t.Errorf("Expected failure reading k, got: %v", err)
+		}
+	})
+
+	t.Run("fails reading bitset", func(t *testing.T) {
+		// Read 16 bytes (m + k), then fail during bitset read
+		r := bytes.NewReader(validData.Bytes()[:16]) // Only m+k, no bitset
+		g := New(1000, 4)
+		_, err := g.ReadFrom(r)
+		if err == nil || err != io.ErrUnexpectedEOF {
+			t.Errorf("Expected EOF during bitset read, got: %v", err)
+		}
+	})
 }
