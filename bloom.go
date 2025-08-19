@@ -132,7 +132,7 @@ func (f *BloomFilter) location(h [4]uint64, i uint) uint {
 // used with permission.
 func EstimateParameters(n uint, p float64) (m uint, k uint) {
 	m = uint(math.Ceil(-1 * float64(n) * math.Log(p) / math.Pow(math.Log(2), 2)))
-	k = uint(math.Ceil(math.Log(2) * float64(m) / float64(n)))
+	k = uint(math.Log(2) * float64(m) / float64(n))
 	return
 }
 
