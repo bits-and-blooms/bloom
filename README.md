@@ -165,6 +165,10 @@ provide synchronization. Typically this is done by using channels (in Go style; 
 or by using `sync.Mutex` to serialize operations. Exceptionally, you may access the same filter from different
 goroutines if you never modify the content of the filter.
 
+## Stars
+
+
+[![Star History Chart](https://api.star-history.com/svg?repos=bits-and-blooms/bloom&type=Date)](https://www.star-history.com/#bits-and-blooms/bloom&Date)
 
 ## Further reading
 
