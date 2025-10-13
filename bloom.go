@@ -310,12 +310,12 @@ func EstimateFalsePositiveRate(m, k, n uint) (fpRate float64) {
 
 // Approximating the number of items
 // https://en.wikipedia.org/wiki/Bloom_filter#Approximating_the_number_of_items_in_a_Bloom_filter
-func (f *BloomFilter) ApproximatedSize() uint32 {
+func (f *BloomFilter) ApproximatedSize() uint64 {
 	x := float64(f.b.Count())
 	m := float64(f.Cap())
 	k := float64(f.K())
 	size := -1 * m / k * math.Log(1-x/m) / math.Log(math.E)
-	return uint32(math.Floor(size + 0.5)) // round
+	return uint64(math.Floor(size + 0.5)) // round
 }
 
 // bloomFilterJSON is an unexported type for marshaling/unmarshaling BloomFilter struct.
