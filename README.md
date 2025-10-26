@@ -9,7 +9,7 @@ This library is used by popular systems such as [Milvus](https://github.com/milv
 A Bloom filter is a concise/compressed representation of a set, where the main
 requirement is to make membership queries; _i.e._, whether an item is a
 member of a set. A Bloom filter will always correctly report the presence
-of an element in the set when the element is indeed present. A Bloom filter 
+of an element in the set when the element is definitely not present. A Bloom filter 
 can use much less storage than the original set, but it allows for some 'false positives':
 it may sometimes report that an element is in the set whereas it is not.
 
