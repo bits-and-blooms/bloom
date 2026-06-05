@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bloom README</title>
+<meta name="description" content="Readable project page for the bloom Go library: overview, installation, examples, false-positive tuning, serialization, and production users.">
+<meta name="theme-color" content="#f6f1e8">
+<meta property="og:title" content="bloom README">
+<meta property="og:description" content="A readable Markdown-style project page for the bloom Go library.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://bits-and-blooms.github.io/bloom/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="page-head" id="top">
+  <div class="wrap head-inner">
+    <div>
+      <p class="overline">Go library</p>
+      <h1>bloom</h1>
+      <p class="tagline">A readable project page for a fast, space-efficient Bloom filter — a probabilistic set that answers membership queries with no false negatives and a tunable false-positive rate.</p>
+    </div>
+    <nav class="page-nav" aria-label="Section navigation">
+      <a href="#overview">Overview</a>
+      <a href="#install">Install</a>
+      <a href="#example">Example</a>
+      <a href="#falsepositives">False positives</a>
+      <a href="#serialization">Serialization</a>
+      <a href="#usedby">Used by</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap page-shell">
+  <aside class="page-meta" aria-label="Project links">
+    <div class="meta-card">
+      <p class="meta-label">Project</p>
+      <ul class="meta-list">
+        <li><a href="https://github.com/bits-and-blooms/bloom" target="_blank" rel="noopener">GitHub</a></li>
+        <li><a href="https://pkg.go.dev/github.com/bits-and-blooms/bloom/v3" target="_blank" rel="noopener">API documentation</a></li>
+        <li><a href="https://github.com/bits-and-blooms/bloom/issues" target="_blank" rel="noopener">Issues</a></li>
+        <li><a href="https://github.com/bits-and-blooms/bitset" target="_blank" rel="noopener">bitset (backing store)</a></li>
+      </ul>
+    </div>
+
+    <div class="meta-card badges-card">
+      <a href="https://github.com/bits-and-blooms/bloom/actions/workflows/test.yml" target="_blank" rel="noopener">
+        <img src="https://github.com/bits-and-blooms/bloom/actions/workflows/test.yml/badge.svg" alt="Test status" loading="lazy">
+      </a>
+      <a href="https://goreportcard.com/report/github.com/bits-and-blooms/bloom" target="_blank" rel="noopener">
+        <img src="https://goreportcard.com/badge/github.com/bits-and-blooms/bloom" alt="Go Report Card" loading="lazy">
+      </a>
+      <a href="https://pkg.go.dev/github.com/bits-and-blooms/bloom/v3" target="_blank" rel="noopener">
+        <img src="https://pkg.go.dev/badge/github.com/bits-and-blooms/bloom.svg" alt="Go Reference" loading="lazy">
+      </a>
+    </div>
+  </aside>
+
+  <article class="markdown-page">
+    <section id="overview">
+      <p class="lede">A Bloom filter is a concise, compressed representation of a set, built for one job: answering membership queries — is this item in the set? It can use far less storage than the original set, at the cost of occasional <em>false positives</em>. It will never produce a false negative: if it says an item is absent, it truly is.</p>
+      <p>This page intentionally reads like a good README instead of a product landing page: direct, scannable, and centered on what the package does, how to size it, and where it is already relied on in production.</p>
+      <hr>
+    </section>
+
+    <section id="install">
+      <h2>Installation</h2>
+      <div class="install-block">
+        <pre><code class="language-bash">go get -u github.com/bits-and-blooms/bloom/v3</code></pre>
+        <button class="copy" data-copy="go get -u github.com/bits-and-blooms/bloom/v3" aria-label="Copy install command">Copy</button>
+      </div>
+      <p>A Bloom filter is not a dynamic data structure: you must know your desired capacity ahead of time. To build a filter for one million elements with a 1% false-positive rate:</p>
+      <pre><code class="language-go">filter := bloom.NewWithEstimates(1000000, 0.01)</code></pre>
+      <p>Call <code>NewWithEstimates</code> conservatively: if you specify too few elements, the false-positive bound may be exceeded. A lower false-positive rate or a higher capacity both cost more memory.</p>
+    </section>
+
+    <section id="features">
+      <h2>What it gives you</h2>
+      <ul>
+        <li>Membership queries with <strong>zero false negatives</strong> and a tunable false-positive rate.</li>
+        <li>Automatic sizing from a target capacity and error rate via <code>NewWithEstimates</code>.</li>
+        <li><code>Add</code>, <code>Test</code>, and the combined <code>TestAndAdd</code> / <code>TestOrAdd</code> primitives, plus <code>*String</code> variants.</li>
+        <li>Set algebra across compatible filters with <code>Merge</code> and <code>Copy</code>.</li>
+        <li>Cardinality estimation with <code>ApproximatedSize</code> and rate validation with <code>EstimateFalsePositiveRate</code>.</li>
+        <li>Portable binary serialization plus <code>json</code>, <code>gob</code>, and <code>BinaryMarshaler</code> support.</li>
+        <li>Backed by a compact <a href="https://github.com/bits-and-blooms/bitset" target="_blank" rel="noopener">bitset</a> and the fast, non-cryptographic murmur3 hash.</li>
+      </ul>
+    </section>
+
+    <section id="example">
+      <h2>Example</h2>
+      <p>Keys are <code>[]byte</code>. Adding and testing a string item:</p>
+      <pre><code class="language-go">package main
+
+import (
+    "fmt"
+
+    "github.com/bits-and-blooms/bloom/v3"
+)
+
+func main() {
+    filter := bloom.NewWithEstimates(1000000, 0.01)
+
+    filter.Add([]byte("Love"))
+
+    if filter.TestString("Love") {
+        fmt.Println("Love is (probably) in the set")
+    }
+    if !filter.TestString("Hate") {
+        fmt.Println("Hate is definitely not in the set")
+    }
+}</code></pre>
+      <p>For numeric data, reach for <code>encoding/binary</code>. For example, to add a <code>uint32</code>:</p>
+      <pre><code class="language-go">i := uint32(100)
+n1 := make([]byte, 4)
+binary.BigEndian.PutUint32(n1, i)
+filter.Add(n1)</code></pre>
+    </section>
+
+    <section id="falsepositives">
+      <h2>Verifying the false-positive rate</h2>
+      <p>Sometimes the actual false-positive rate differs slightly from the theoretical one. You can estimate it for a filter with <code>m</code> bits and <code>k</code> hash functions over a set of size <code>n</code>:</p>
+      <pre><code class="language-go">if bloom.EstimateFalsePositiveRate(20*n, 5, n) > 0.001 {
+    // too high — increase m or k
+}</code></pre>
+      <p>Use it to validate the computed <code>m</code>, <code>k</code> parameters:</p>
+      <pre><code class="language-go">m, k := bloom.EstimateParameters(n, fp)
+actualFPRate := bloom.EstimateFalsePositiveRate(m, k, n)</code></pre>
+      <blockquote>
+        <p><strong>Note:</strong> <code>EstimateFalsePositiveRate</code> builds a temporary filter and is relatively expensive — it is meant for validation, not for hot paths. Estimating the rate clears the filter it operates on.</p>
+      </blockquote>
+    </section>
+
+    <section id="serialization">
+      <h2>Serialization</h2>
+      <p>You can write a Bloom filter to a stable byte stream and read it back:</p>
+      <pre><code class="language-go">f := bloom.New(1000, 4)
+
+var buf bytes.Buffer
+bytesWritten, err := f.WriteTo(&amp;buf)
+if err != nil {
+    // handle error
+}
+
+var g bloom.BloomFilter
+bytesRead, err := g.ReadFrom(&amp;buf)
+if err != nil {
+    // handle error
+}
+// bytesRead == bytesWritten</code></pre>
+      <blockquote>
+        <p><strong>Performance tip:</strong> when reading from or writing to a file or network connection, wrap your streams in <code>bufio</code> instances for better throughput.</p>
+      </blockquote>
+    </section>
+
+    <section id="design">
+      <h2>Design</h2>
+      <p>A Bloom filter has two parameters: <code>m</code>, the number of bits used in storage, and <code>k</code>, the number of hash functions. The filter is backed by a <a href="https://github.com/bits-and-blooms/bitset" target="_blank" rel="noopener">bitset</a>; a key is represented by setting the bits at each of the <code>k</code> hashed locations (modulo <code>m</code>). Membership is tested by checking whether all of those bits are set.</p>
+      <p>If an item is truly in the set, the filter never fails (the true-positive rate is 1.0); it is only susceptible to false positives. The art is to choose <code>k</code> and <code>m</code> correctly. This implementation hashes with <a href="https://github.com/twmb/murmur3" target="_blank" rel="noopener">murmur3</a>, a fast non-cryptographic hash.</p>
+    </section>
+
+    <section id="usedby">
+      <h2>Used by demanding systems</h2>
+      <p>The package is relied on across databases, observability systems, networking tools, blockchains, and infrastructure software.</p>
+
+      <h3>Databases and storage engines</h3>
+      <ul>
+        <li><a href="https://github.com/milvus-io/milvus" target="_blank" rel="noopener">milvus-io/milvus</a> — leading open-source vector database, explicitly named in the repo README.</li>
+        <li><a href="https://github.com/weaviate/weaviate" target="_blank" rel="noopener">weaviate/weaviate</a> — vector DB, used in its <code>lsmkv</code> LSM storage layer.</li>
+        <li><a href="https://github.com/openGemini/openGemini" target="_blank" rel="noopener">openGemini/openGemini</a> — time-series database with multiple index packages.</li>
+        <li><a href="https://github.com/siglens/siglens" target="_blank" rel="noopener">siglens/siglens</a> — observability and log search engine.</li>
+        <li><a href="https://github.com/ankur-anand/unisondb" target="_blank" rel="noopener">ankur-anand/unisondb</a> — embedded database memtable.</li>
+        <li><a href="https://github.com/jakub-galecki/godb" target="_blank" rel="noopener">jakub-galecki/godb</a> — SSTable layer in an LSM-tree database.</li>
+      </ul>
+
+      <h3>Observability and log processing</h3>
+      <ul>
+        <li><a href="https://github.com/grafana/loki" target="_blank" rel="noopener">grafana/loki</a> — Grafana's log aggregation system, across its index and storage layers.</li>
+      </ul>
+
+      <h3>Distributed systems and consensus</h3>
+      <ul>
+        <li><a href="https://github.com/atomix/atomix" target="_blank" rel="noopener">atomix/atomix</a> — distributed primitives framework.</li>
+        <li><a href="https://github.com/authzed/spicedb" target="_blank" rel="noopener">authzed/spicedb</a> — Zanzibar-style permissions system, dispatch layer.</li>
+        <li><a href="https://github.com/splitio/go-split-commons" target="_blank" rel="noopener">splitio/go-split-commons</a> — Split.io Go SDK, impression deduplication across major versions.</li>
+      </ul>
+
+      <h3>Networking and security tools</h3>
+      <ul>
+        <li><a href="https://github.com/projectdiscovery/hmap" target="_blank" rel="noopener">projectdiscovery/hmap</a> — used across the nuclei/subfinder/httpx scanner ecosystem.</li>
+        <li><a href="https://github.com/daeuniverse/dae" target="_blank" rel="noopener">daeuniverse/dae</a> — Linux eBPF transparent proxy and routing table.</li>
+        <li><a href="https://github.com/bloXroute-Labs/gateway" target="_blank" rel="noopener">bloXroute-Labs/gateway</a> — blockchain network gateway.</li>
+      </ul>
+
+      <h3>Blockchain and crypto</h3>
+      <ul>
+        <li><a href="https://github.com/NethermindEth/juno" target="_blank" rel="noopener">NethermindEth/juno</a> — Starknet full node.</li>
+        <li><a href="https://github.com/iost-official/go-iost" target="_blank" rel="noopener">iost-official/go-iost</a> — IOST blockchain peer-to-peer layer.</li>
+        <li><a href="https://github.com/status-im/status-go" target="_blank" rel="noopener">status-im/status-go</a> — Status decentralized messenger.</li>
+        <li><a href="https://github.com/code-payments/code-server" target="_blank" rel="noopener">code-payments/code-server</a> — crypto payments backend.</li>
+      </ul>
+
+      <h3>Privacy and identity</h3>
+      <ul>
+        <li><a href="https://github.com/optable/match" target="_blank" rel="noopener">optable/match</a> — privacy-preserving record linkage.</li>
+        <li><a href="https://github.com/Arceliar/ironwood" target="_blank" rel="noopener">Arceliar/ironwood</a> — anonymous routing network library.</li>
+      </ul>
+
+      <h3>Web crawling and scraping</h3>
+      <ul>
+        <li><a href="https://github.com/beego/beego" target="_blank" rel="noopener">beego/beego</a> — web framework, named in the upstream README.</li>
+        <li><a href="https://github.com/editorpost/spider" target="_blank" rel="noopener">editorpost/spider</a> — deduplication store for crawling.</li>
+      </ul>
+
+      <h3>Application infrastructure</h3>
+      <ul>
+        <li><a href="https://github.com/bentoml/yatai" target="_blank" rel="noopener">bentoml/yatai</a> — model serving infrastructure.</li>
+        <li><a href="https://github.com/rotationalio/ensign" target="_blank" rel="noopener">rotationalio/ensign</a> — event streaming platform.</li>
+        <li><a href="https://github.com/puppetlabs/leg" target="_blank" rel="noopener">puppetlabs/leg</a> — message deduplication middleware.</li>
+        <li><a href="https://github.com/letsencrypt/x509search" target="_blank" rel="noopener">letsencrypt/x509search</a> — certificate search tooling.</li>
+      </ul>
+    </section>
+
+    <section id="concurrency">
+      <h2>Goroutine safety</h2>
+      <p>Filters are intentionally unsynchronized for performance. If multiple goroutines need the same filter, provide your own synchronization — typically a <code>sync.Mutex</code>, or channel hand-off so there is only ever one owner. Exceptionally, multiple goroutines may share a filter if none of them ever modify its content.</p>
+    </section>
+
+    <section id="further-reading">
+      <h2>Further reading</h2>
+      <p><a href="https://www.amazon.com/dp/B0FMPGSWR5" target="_blank" rel="noopener">Mastering Programming: From Testing to Performance in Go</a> covers the kind of testing and optimization discipline that libraries like this benefit from.</p>
+    </section>
+  </article>
+</main>
+
+<a class="totop" href="#top" id="toTop" aria-label="Back to top">↑</a>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
