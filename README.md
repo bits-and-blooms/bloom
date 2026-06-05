@@ -4,7 +4,8 @@ Bloom filters
 [![Go Report Card](https://goreportcard.com/badge/github.com/bits-and-blooms/bloom)](https://goreportcard.com/report/github.com/bits-and-blooms/bloom)
 [![Go Reference](https://pkg.go.dev/badge/github.com/bits-and-blooms/bloom.svg)](https://pkg.go.dev/github.com/bits-and-blooms/bloom/v3)
 
-This library is used by popular systems such as [Milvus](https://github.com/milvus-io/milvus) and [beego](https://github.com/beego/Beego).
+## Presentation
+
 
 A Bloom filter is a concise/compressed representation of a set, where the main
 requirement is to make membership queries; _i.e._, whether an item is a
@@ -123,6 +124,63 @@ E.g.,
 	f, err := os.Open("myfile")
 	r := bufio.NewReader(f)
 ```
+
+## Users
+
+
+This library is used by popular systems such as
+
+
+LSM-tree structures and index skipping:
+
+- [github.com/milvus-io/milvus](https://github.com/milvus-io/milvus) — the flagship user explicitly named in the repo README; leading open-source vector database
+- [github.com/weaviate/weaviate](https://github.com/weaviate/weaviate) — major vector DB, uses it in `lsmkv` (their LSM storage layer)
+- [github.com/openGemini/openGemini](https://github.com/openGemini/openGemini) — open-source time-series DB, 3 index packages
+- [github.com/siglens/siglens](https://github.com/siglens/siglens) — observability/log search engine, 5 packages
+- [github.com/ankur-anand/unisondb](https://github.com/ankur-anand/unisondb) — embedded DB memtable
+- [github.com/jakub-galecki/godb](https://github.com/jakub-galecki/godb) — LSM-tree DB SSTable layer
+
+Observability & log processing:
+
+- [github.com/grafana/loki](https://github.com/grafana/loki) — Grafana's log aggregation system, 4 packages in dataobj/index and storage layers
+
+Distributed systems & consensus:
+
+- [github.com/atomix/atomix](https://github.com/atomix/atomix) — distributed primitives framework (6 packages across 3 generations of the repo)
+- [github.com/authzed/spicedb](https://github.com/authzed/spicedb) — SpiceDB permissions system (Zanzibar-style), dispatch layer
+- [github.com/splitio/go-split-commons](https://github.com/splitio/go-split-commons) — Split.io Go SDK, 6 major versions all depend on it for impression deduplication
+
+Networking & security tools:
+
+- [github.com/projectdiscovery/hmap](https://github.com/projectdiscovery/hmap) — ProjectDiscovery's hmap (used across their whole nuclei/subfinder/httpx scanner ecosystem)
+- [github.com/daeuniverse/dae](https://github.com/daeuniverse/dae) — Linux eBPF transparent proxy, routing table
+- [github.com/bloXroute-Labs/gateway](https://github.com/bloXroute-Labs/gateway) — blockchain network gateway
+
+Blockchain & crypto:
+
+- [github.com/NethermindEth/juno](https://github.com/NethermindEth/juno) — Starknet full node (Go), 3 packages
+- [github.com/iost-official/go-iost](https://github.com/iost-official/go-iost) — IOST blockchain p2p layer
+- [github.com/status-im/status-go](https://github.com/status-im/status-go) — Status decentralized messenger, community protocol
+- [github.com/code-payments/code-server](https://github.com/code-payments/code-server) — Code crypto payments backend
+
+Privacy & identity:
+
+- [github.com/optable/match](https://github.com/optable/match) — privacy-preserving record linkage (BPSI protocol)
+- [github.com/Arceliar/ironwood](https://github.com/Arceliar/ironwood) — anonymous routing network library
+
+Web crawling & scraping:
+
+- [github.com/beego/beego](https://github.com/beego/beego) (via dependent ecosystem) — the web framework explicitly named in the README
+- [github.com/editorpost/spider](https://github.com/editorpost/spider) — web spider deduplication store
+
+Application infrastructure (URL shorteners, caches, feeds):
+
+- [github.com/bentoml/yatai](https://github.com/bentoml/yatai) — BentoML model serving infrastructure
+- [github.com/rotationalio/ensign](https://github.com/rotationalio/ensign) — event streaming platform
+- [github.com/puppetlabs/leg](https://github.com/puppetlabs/leg) — Puppet Labs message deduplication middleware
+- [github.com/letsencrypt/x509search](https://github.com/letsencrypt/x509search) — Let's Encrypt certificate search tool
+
+
 
 ## Contributing
 
