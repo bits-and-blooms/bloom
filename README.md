@@ -1,7 +1,6 @@
 Bloom filters
 -------------
 [![Test](https://github.com/bits-and-blooms/bloom/actions/workflows/test.yml/badge.svg)](https://github.com/bits-and-blooms/bloom/actions/workflows/test.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/bits-and-blooms/bloom)](https://goreportcard.com/report/github.com/bits-and-blooms/bloom)
 [![Go Reference](https://pkg.go.dev/badge/github.com/bits-and-blooms/bloom.svg)](https://pkg.go.dev/github.com/bits-and-blooms/bloom/v3)
 
 ## Presentation
@@ -222,11 +221,6 @@ a filter from more than one goroutine, you should
 provide synchronization. Typically this is done by using channels (in Go style; so there is only ever one owner),
 or by using `sync.Mutex` to serialize operations. Exceptionally, you may access the same filter from different
 goroutines if you never modify the content of the filter.
-
-## Stars
-
-
-[![Star History Chart](https://api.star-history.com/svg?repos=bits-and-blooms/bloom&type=Date)](https://www.star-history.com/#bits-and-blooms/bloom&Date)
 
 ## Further reading
 
