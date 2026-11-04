@@ -314,7 +314,14 @@ func (f *BloomFilter) ApproximatedSize() uint32 {
 	x := float64(f.b.Count())
 	m := float64(f.Cap())
 	k := float64(f.K())
+	if x >= m {
+		// Saturated filter: return max value since the estimate is infinite.
+		return math.MaxUint32
+	}
 	size := -1 * m / k * math.Log(1-x/m) / math.Log(math.E)
+	if math.IsInf(size, 1) || math.IsNaN(size) || size > float64(math.MaxUint32) {
+		return math.MaxUint32
+	}
 	return uint32(math.Floor(size + 0.5)) // round
 }
 
