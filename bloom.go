@@ -175,7 +175,7 @@ func (f *BloomFilter) Merge(g *BloomFilter) error {
 	}
 
 	if f.k != g.k {
-		return fmt.Errorf("k's don't match: %d != %d", f.m, g.m)
+		return fmt.Errorf("k's don't match: %d != %d", f.k, g.k)
 	}
 
 	f.b.InPlaceUnion(g.b)
