@@ -658,6 +658,44 @@ func TestApproximatedSize(t *testing.T) {
 	}
 }
 
+// Regression test for https://github.com/bits-and-blooms/bloom/issues/104:
+// converting +Inf to uint32 is platform dependent, so a saturated filter
+// returned 0 on amd64 and math.MaxUint32 on arm64.
+func TestApproximatedSizeSaturated(t *testing.T) {
+	const m = 10000
+	f := FromWithM(bitset.New(m).Complement().Bytes(), m, 4)
+	if size := f.ApproximatedSize(); size != math.MaxUint32 {
+		t.Errorf("saturated filter: got %d, want %d", size, uint32(math.MaxUint32))
+	}
+	// One bit short of saturation still gives a finite estimate.
+	g := FromWithM(bitset.New(m).Complement().Clear(5).Bytes(), m, 4)
+	if size := g.ApproximatedSize(); size != 23026 {
+		t.Errorf("nearly saturated filter: got %d, want 23026", size)
+	}
+}
+
+func TestApproximatedSizeEmptyZeroCapacity(t *testing.T) {
+	// FromWithM does not enforce m >= 1 or k >= 1.
+	for _, f := range []*BloomFilter{FromWithM(nil, 0, 4), FromWithM(nil, 0, 0), FromWithM(make([]uint64, 1), 64, 0)} {
+		if size := f.ApproximatedSize(); size != 0 {
+			t.Errorf("empty filter (m=%d, k=%d): got %d, want 0", f.Cap(), f.K(), size)
+		}
+	}
+}
+
+func TestApproximatedSizeOverflow(t *testing.T) {
+	if testing.Short() {
+		t.Skip("allocates 32 MB")
+	}
+	// With m = 2^28 bits, k = 1 and all but one bit set, the estimate is
+	// m * ln(m), about 5.2e9, which does not fit in a uint32.
+	const m = 1 << 28
+	f := FromWithM(bitset.New(m).Complement().Clear(0).Bytes(), m, 1)
+	if size := f.ApproximatedSize(); size != math.MaxUint32 {
+		t.Errorf("got %d, want %d", size, uint32(math.MaxUint32))
+	}
+}
+
 func TestFPP(t *testing.T) {
 	f := NewWithEstimates(1000, 0.001)
 	for i := uint32(0); i < 1000; i++ {
