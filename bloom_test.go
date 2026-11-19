@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -786,7 +787,12 @@ func TestBitSetAndClearAll(t *testing.T) {
 	}
 }
 
-// Add new failing writer/reader types at top of file
+var (
+	errSimulatedWrite = errors.New("simulated write failure")
+	errSimulatedRead  = errors.New("simulated read failure")
+)
+
+// failWriter accepts writes until failsAfter bytes have been written, then fails.
 type failWriter struct {
 	failsAfter int
 	count      int
@@ -794,12 +800,13 @@ type failWriter struct {
 
 func (w *failWriter) Write(p []byte) (n int, err error) {
 	if w.count >= w.failsAfter {
-		return 0, fmt.Errorf("simulated write failure")
+		return 0, errSimulatedWrite
 	}
 	w.count += len(p)
 	return len(p), nil
 }
 
+// failReader reads until failsAfter bytes have been read, then fails.
 type failReader struct {
 	failsAfter int
 	count      int
@@ -807,7 +814,7 @@ type failReader struct {
 
 func (r *failReader) Read(p []byte) (n int, err error) {
 	if r.count >= r.failsAfter {
-		return 0, fmt.Errorf("simulated read failure")
+		return 0, errSimulatedRead
 	}
 	// Return EOF if we're supposed to read past failure point
 	if r.count+len(p) > r.failsAfter {
@@ -823,7 +830,7 @@ func TestWriteToErrorCases(t *testing.T) {
 	t.Run("fails writing m", func(t *testing.T) {
 		w := &failWriter{failsAfter: 0}
 		_, err := f.WriteTo(w)
-		if err == nil || err.Error() != "simulated write failure" {
+		if !errors.Is(err, errSimulatedWrite) {
 			t.Errorf("Expected simulated write failure, got: %v", err)
 		}
 	})
@@ -832,7 +839,7 @@ func TestWriteToErrorCases(t *testing.T) {
 		// 8 bytes written for m (uint64), fails on k
 		w := &failWriter{failsAfter: 8}
 		_, err := f.WriteTo(w)
-		if err == nil || err.Error() != "simulated write failure" {
+		if !errors.Is(err, errSimulatedWrite) {
 			t.Errorf("Expected failure writing k, got: %v", err)
 		}
 	})
@@ -859,7 +866,7 @@ func TestReadFromErrorCases(t *testing.T) {
 		r := &failReader{failsAfter: 0}
 		g := New(1000, 4)
 		_, err := g.ReadFrom(r)
-		if err == nil || err.Error() != "simulated read failure" {
+		if !errors.Is(err, errSimulatedRead) {
 			t.Errorf("Expected failure reading m, got: %v", err)
 		}
 	})
@@ -869,7 +876,7 @@ func TestReadFromErrorCases(t *testing.T) {
 		r := &failReader{failsAfter: 8}
 		g := New(1000, 4)
 		_, err := g.ReadFrom(r)
-		if err == nil || err.Error() != "simulated read failure" {
+		if !errors.Is(err, errSimulatedRead) {
 			t.Errorf("Expected failure reading k, got: %v", err)
 		}
 	})
@@ -879,8 +886,8 @@ func TestReadFromErrorCases(t *testing.T) {
 		r := bytes.NewReader(validData.Bytes()[:16]) // Only m+k, no bitset
 		g := New(1000, 4)
 		_, err := g.ReadFrom(r)
-		if err == nil || err != io.ErrUnexpectedEOF {
-			t.Errorf("Expected EOF during bitset read, got: %v", err)
+		if err != io.ErrUnexpectedEOF {
+			t.Errorf("Expected io.ErrUnexpectedEOF during bitset read, got: %v", err)
 		}
 	})
 }
