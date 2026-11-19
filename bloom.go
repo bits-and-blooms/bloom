@@ -308,10 +308,17 @@ func EstimateFalsePositiveRate(m, k, n uint) (fpRate float64) {
 	return
 }
 
-// Approximating the number of items
+// ApproximatedSize estimates the number of items added to the filter from the
+// number of bits set.
 // https://en.wikipedia.org/wiki/Bloom_filter#Approximating_the_number_of_items_in_a_Bloom_filter
+//
+// It returns 0 for an empty filter. It returns math.MaxUint32 when the filter
+// is saturated (all bits set) or when the estimate does not fit in a uint32.
 func (f *BloomFilter) ApproximatedSize() uint32 {
 	x := float64(f.b.Count())
+	if x == 0 {
+		return 0
+	}
 	m := float64(f.Cap())
 	k := float64(f.K())
 	if x >= m {
@@ -319,7 +326,8 @@ func (f *BloomFilter) ApproximatedSize() uint32 {
 		return math.MaxUint32
 	}
 	size := -1 * m / k * math.Log(1-x/m) / math.Log(math.E)
-	if math.IsInf(size, 1) || math.IsNaN(size) || size > float64(math.MaxUint32) {
+	// Converting NaN or a value out of range to uint32 is platform dependent.
+	if math.IsNaN(size) || size > float64(math.MaxUint32) {
 		return math.MaxUint32
 	}
 	return uint32(math.Floor(size + 0.5)) // round
