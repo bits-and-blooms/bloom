@@ -103,7 +103,7 @@ func From(data []uint64, k uint) *BloomFilter {
 // FromWithM creates a new Bloom filter with _m_ length, _k_ hashing functions.
 // The data slice is not going to be reset.
 func FromWithM(data []uint64, m, k uint) *BloomFilter {
-	return &BloomFilter{m, k, bitset.From(data)}
+	return &BloomFilter{max(1, m), max(1, k), bitset.From(data)}
 }
 
 // baseHashes returns the four hash values of data that are used to create k
